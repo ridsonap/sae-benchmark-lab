@@ -800,10 +800,10 @@ generate_benchmark_dashboard <- function(
         <div class="d-flex align-items-center gap-2">
           <span class="text-muted small fw-medium" data-i18n="eval_mode_label">Mode Evaluasi:</span>
           <div class="btn-group btn-group-sm" role="group" id="evalModeToggle">
-            <button type="button" class="btn btn-primary active" id="btnSingleMode" onclick="switchEvalMode(\"single\")">
+            <button type="button" class="btn btn-primary active" id="btnSingleMode">
               <i class="fa-solid fa-cube me-1"></i> <span data-i18n="mode_single">Sampel Tunggal</span>
             </button>
-            <button type="button" class="btn btn-outline-secondary" id="btnMCMode" onclick="switchEvalMode(\"mc\")">
+            <button type="button" class="btn btn-outline-secondary" id="btnMCMode">
               <i class="fa-solid fa-arrows-rotate me-1"></i> <span data-i18n="mode_mc">Monte Carlo (R=30)</span>
             </button>
           </div>
@@ -1429,6 +1429,11 @@ generate_benchmark_dashboard <- function(
       applyTheme(currentTheme);
       applyLanguage(currentLang);
       initCharts();
+
+      const btnS = document.getElementById("btnSingleMode");
+      const btnM = document.getElementById("btnMCMode");
+      if (btnS) btnS.addEventListener("click", () => switchEvalMode("single"));
+      if (btnM) btnM.addEventListener("click", () => switchEvalMode("mc"));
     });
   </script>
 </body>
