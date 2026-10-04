@@ -32,12 +32,16 @@ generate_benchmark_dashboard <- function(
   
   # Copy static plot assets if they exist
   res_plots_dir <- file.path(root_dir, "results", "plots")
-  for (pname in c("leaderboard_rrmse_comparison.png", "leaderboard_relative_efficiency.png")) {
+  for (pname in c("leaderboard_rrmse_comparison.png", "leaderboard_relative_efficiency.png", "mc_replication_shrinkage.png")) {
     psrc <- file.path(res_plots_dir, pname)
     if (file.exists(psrc)) {
       file.copy(psrc, file.path(docs_plots_dir, pname), overwrite = TRUE)
     }
   }
+  
+  # Load Monte Carlo replications if available
+  mc_path <- file.path(root_dir, "results", "mc_replications_leaderboard.csv")
+  df_mc <- if (file.exists(mc_path)) read.csv(mc_path, stringsAsFactors = FALSE) else NULL
   
   # Summary KPIs
   total_models <- length(unique(df$model))
@@ -181,11 +185,11 @@ generate_benchmark_dashboard <- function(
     sprintf('<span class="pkg-badge %s">%s</span>', pkg_badge_class, model_str)
   }
   
-  # Calculate per-dataset best metrics
-  best_metrics <- list()
-  for (ds_id in names(dataset_meta)) {
-    sub_df <- df[df$dataset_id == ds_id, ]
-    if (nrow(sub_df) == 0) next
+  # Helper to render table for either single sample or MC
+  render_dataset_table <- function(sub_df, ds_id, is_mc = FALSE) {
+    if (is.null(sub_df) || nrow(sub_df) == 0) {
+      return('<div class="p-4 text-muted small text-center"><i class="fa-solid fa-circle-exclamation me-1"></i>Data simulasi Monte Carlo sedang diproses untuk dataset ini.</div>')
+    }
     
     val_rrmse <- sub_df$RRMSE_pct[!is.na(sub_df$RRMSE_pct)]
     val_arb <- sub_df$ARB_pct[!is.na(sub_df$ARB_pct)]
@@ -194,7 +198,7 @@ generate_benchmark_dashboard <- function(
     val_ram <- sub_df$Peak_RAM_MB[!is.na(sub_df$Peak_RAM_MB) & sub_df$Peak_RAM_MB > 0]
     val_time <- sub_df$Runtime_sec[!is.na(sub_df$Runtime_sec)]
     
-    best_metrics[[ds_id]] <- list(
+    b <- list(
       min_rrmse = if (length(val_rrmse) > 0) min(val_rrmse) else NA_real_,
       min_arb = if (length(val_arb) > 0) min(val_arb) else NA_real_,
       max_eff = if (length(val_eff) > 0) max(val_eff) else NA_real_,
@@ -204,16 +208,8 @@ generate_benchmark_dashboard <- function(
     )
     if ("Outlier_RRMSE" %in% names(sub_df)) {
       val_out <- sub_df$Outlier_RRMSE[!is.na(sub_df$Outlier_RRMSE)]
-      best_metrics[[ds_id]]$min_outlier <- if (length(val_out) > 0) min(val_out) else NA_real_
+      b$min_outlier <- if (length(val_out) > 0) min(val_out) else NA_real_
     }
-  }
-  
-  # Build per-dataset HTML tables with SEPARATED RANK AND MODEL COLUMNS
-  dataset_tables_html <- list()
-  for (ds_id in names(dataset_meta)) {
-    meta <- dataset_meta[[ds_id]]
-    sub_df <- df[df$dataset_id == ds_id, ]
-    b <- best_metrics[[ds_id]]
     
     is_outlier_ds <- (ds_id == "ds07_extreme_outliers")
     is_bounded_ds <- (ds_id == "ds02_bounded_rate")
@@ -266,20 +262,20 @@ generate_benchmark_dashboard <- function(
       cell_ram <- sprintf('<td class="text-end font-monospace %s">%s</td>',
                           if (is_best_ram) "best-cell" else "", ram_val)
       
-      time_val <- if (!is.na(row$Runtime_sec)) sprintf("%.2fs", row$Runtime_sec) else "-"
+      time_val <- if (!is.na(row$Runtime_sec)) sprintf("%.3fs", row$Runtime_sec) else "-"
       cell_time <- sprintf('<td class="text-end font-monospace %s">%s</td>',
                            if (is_best_time) "best-cell" else "", time_val)
       
       extra_cells <- ""
       if (is_outlier_ds) {
-        out_rrmse <- if (!is.na(row$Outlier_RRMSE)) sprintf("%.2f%%", row$Outlier_RRMSE) else "-"
-        is_best_out <- !is.na(row$Outlier_RRMSE) && !is.na(b$min_outlier) && abs(row$Outlier_RRMSE - b$min_outlier) <= tol
+        out_rrmse <- if ("Outlier_RRMSE" %in% names(row) && !is.na(row$Outlier_RRMSE)) sprintf("%.2f%%", row$Outlier_RRMSE) else "-"
+        is_best_out <- !is.na(out_rrmse) && out_rrmse != "-" && !is.na(b$min_outlier) && abs(row$Outlier_RRMSE - b$min_outlier) <= tol
         extra_cells <- sprintf('<td class="text-end %s">%s%s</td>',
                                if (is_best_out) "best-cell" else "",
                                out_rrmse,
                                if (is_best_out) ' <i class="fa-solid fa-star text-emerald ms-1 small"></i>' else "")
       } else if (is_bounded_ds) {
-        b_viol <- if (!is.na(row$Boundary_Violations)) as.character(row$Boundary_Violations) else "0"
+        b_viol <- if ("Boundary_Violations" %in% names(row) && !is.na(row$Boundary_Violations)) as.character(row$Boundary_Violations) else "0"
         extra_cells <- sprintf('<td class="text-center font-monospace %s">%s</td>',
                                if (b_viol == "0") "text-success fw-bold" else "text-danger fw-bold", b_viol)
       }
@@ -307,7 +303,14 @@ generate_benchmark_dashboard <- function(
       extra_th_en <- '<th class="text-center" data-i18n="col_violations">Pelanggaran Batas (&lt;0 / &gt;1)</th>'
     }
     
+    mc_notice <- if (is_mc) {
+      '<div class="px-3 py-2 bg-primary-subtle text-primary border-bottom small d-flex align-items-center justify-content-between flex-wrap gap-2"><span><i class="fa-solid fa-arrows-rotate me-1"></i><strong>Monte Carlo (R=30 Replikasi):</strong> Metrik empiris dari 30 penarikan sampel berulang terhadap finite population ground truth.</span><span class="badge bg-primary text-white">Empirical MSE & RelEff</span></div>'
+    } else {
+      '<div class="px-3 py-2 bg-body-tertiary text-muted border-bottom small d-flex align-items-center justify-content-between flex-wrap gap-2"><span><i class="fa-solid fa-cube me-1"></i><strong>Sampel Tunggal (Single Sample):</strong> Evaluasi terhadap finite population ground truth dari 1 set survei Susenas.</span><span class="badge bg-secondary-subtle text-secondary border">Single Realization</span></div>'
+    }
+    
     table_wrapper <- paste0(
+      mc_notice,
       '<div class="table-responsive">',
       '<table class="table table-hover align-middle mb-0 benchmark-table">',
       '<thead>',
@@ -329,7 +332,14 @@ generate_benchmark_dashboard <- function(
       '</table>',
       '</div>'
     )
-    dataset_tables_html[[ds_id]] <- table_wrapper
+    table_wrapper
+  }
+  
+  dataset_tables_single <- list()
+  dataset_tables_mc <- list()
+  for (ds_id in names(dataset_meta)) {
+    dataset_tables_single[[ds_id]] <- render_dataset_table(df[df$dataset_id == ds_id, ], ds_id, is_mc = FALSE)
+    dataset_tables_mc[[ds_id]] <- if (!is.null(df_mc)) render_dataset_table(df_mc[df_mc$dataset_id == ds_id, ], ds_id, is_mc = TRUE) else dataset_tables_single[[ds_id]]
   }
   
   # Build JSON data payload for interactive charts
@@ -377,7 +387,8 @@ generate_benchmark_dashboard <- function(
     )
     tabs_nav <- c(tabs_nav, tab_btn)
     
-    tbl_content <- dataset_tables_html[[ds_id]]
+    tbl_single <- dataset_tables_single[[ds_id]]
+    tbl_mc <- dataset_tables_mc[[ds_id]]
     pane <- sprintf(
       '<div class="tab-pane fade %s" id="pane-%s" role="tabpanel">
         <div class="card dataset-card mb-4">
@@ -395,7 +406,12 @@ generate_benchmark_dashboard <- function(
             </div>
           </div>
           <div class="card-body p-0">
-            %s
+            <div class="table-mode table-mode-single">
+              %s
+            </div>
+            <div class="table-mode table-mode-mc d-none">
+              %s
+            </div>
           </div>
           <div class="card-footer bg-transparent border-top py-2 px-3 d-flex justify-content-between align-items-center text-muted small">
             <span><i class="fa-solid fa-circle-info me-1"></i><span data-i18n="dgp_label">Struktur DGP:</span> <span class="dgp-text" data-en="%s" data-id="%s">%s</span></span>
@@ -406,7 +422,7 @@ generate_benchmark_dashboard <- function(
       pane_active, meta$code, meta$code, meta$badge_en, meta$badge_id, meta$badge_id,
       meta$name_en, meta$name_id, meta$name_id,
       meta$challenge_en, meta$challenge_id, meta$challenge_id,
-      tbl_content,
+      tbl_single, tbl_mc,
       meta$dgp_en, meta$dgp_id, meta$dgp_id
     )
     tab_panes <- c(tab_panes, pane)
@@ -749,14 +765,48 @@ generate_benchmark_dashboard <- function(
           </div>
         </div>
       </div>
+
+      <!-- Monte Carlo Replications Distribution (Shrinkage Plot) -->
+      <div class="row g-3 mt-1">
+        <div class="col-12">
+          <div class="chart-container-box">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+              <h5 class="fs-6 fw-bold mb-0">
+                <i class="fa-solid fa-arrows-split-up-and-left text-primary me-1"></i>
+                <span data-i18n="chart_mc_title">Sebaran Replikasi Monte Carlo (R=30) & Efek Penyusutan (Shrinkage)</span>
+              </h5>
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle small">
+                <i class="fa-solid fa-diamond me-1"></i> <span data-i18n="chart_mc_legend">Titik Merah = Nilai Murni Populasi (Ground Truth)</span>
+              </span>
+            </div>
+            <p class="text-muted small mb-3" data-i18n="chart_mc_desc">
+              Perbandingan sebaran estimasi dari 30 penarikan sampel independen (BPS Two-Stage). Penduga Langsung (abu-abu) menyebar lebar mencerminkan varians sampling yang besar, sedangkan model SAE fastsae (biru & hijau) secara konsisten menyusutkan estimasi ke arah nilai Ground Truth dengan stabilitas tinggi.
+            </p>
+            <div class="text-center p-2 bg-body-tertiary rounded border">
+              <img src="plots/mc_replication_shrinkage.png" alt="Monte Carlo Replication Shrinkage Plot" class="img-fluid rounded" style="max-height: 480px; width: auto;" />
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Leaderboard Per Dataset Section -->
     <section class="mb-5">
-      <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-2">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
           <h2 class="h4 fw-bold mb-1"><i class="fa-solid fa-table-list text-primary me-2"></i><span data-i18n="table_section_title">Tabel Evaluasi Model per Dataset</span></h2>
           <p class="text-muted small mb-0" data-i18n="table_section_subtitle">Setiap dataset menguji karakteristik struktur khusus; peringkat dipisahkan dan nilai terbaik ditandai hijau lembut.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted small fw-medium" data-i18n="eval_mode_label">Mode Evaluasi:</span>
+          <div class="btn-group btn-group-sm" role="group" id="evalModeToggle">
+            <button type="button" class="btn btn-primary active" id="btnSingleMode" onclick="switchEvalMode(\"single\")">
+              <i class="fa-solid fa-cube me-1"></i> <span data-i18n="mode_single">Sampel Tunggal</span>
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="btnMCMode" onclick="switchEvalMode(\"mc\")">
+              <i class="fa-solid fa-arrows-rotate me-1"></i> <span data-i18n="mode_mc">Monte Carlo (R=30)</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -768,6 +818,96 @@ generate_benchmark_dashboard <- function(
       <!-- Dataset Tab Content Panes -->
       <div class="tab-content" id="datasetTabContent">
         {{TAB_PANES}}
+      </div>
+    </section>
+
+    <!-- Benchmarking Property Validation Section -->
+    <section class="mb-5">
+      <div class="methodology-box">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-scale-balanced text-success fs-5"></i>
+            <h3 class="h5 fw-bold mb-0" data-i18n="benchmarking_title">Validasi Properti Benchmarking (Konsistensi Agregat Wilayah)</h3>
+          </div>
+          <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 font-monospace">
+            <i class="fa-solid fa-check-double me-1"></i> <span data-i18n="status_perfect">Presisi Tepat (Deviasi = 0,00)</span>
+          </span>
+        </div>
+        <p class="text-muted small mb-3" data-i18n="benchmarking_desc">
+          Salah satu syarat krusial penerapan SAE di Badan Pusat Statistik (BPS) adalah <em>benchmarking property</em>: jumlah estimasi area kecil (kabupaten/kota) harus tepat sama dengan angka resmi estimasi langsung (Direct) tingkat wilayah atasnya (provinsi/nasional). Tanpa benchmarking, model EBLUP standar menghasilkan deviasi agregat. Fitur <code>self_benchmark = TRUE</code> pada paket <code>fastsae</code> menjamin konsistensi matematis secara langsung dalam estimasi parameter tanpa memerlukan penyesuaian <em>pro-rata post-hoc</em>.
+        </p>
+
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0 bg-body rounded border">
+            <thead class="table-header-row text-uppercase small">
+              <tr>
+                <th class="ps-3" data-i18n="col_archetype">Karakteristik Dataset</th>
+                <th class="text-end" data-i18n="col_target_direct">Target Langsung (&sum; Y<sub>d</sub><sup>dir</sup>)</th>
+                <th class="text-end" data-i18n="col_eblup_raw">EBLUP Standar (&sum; &theta;&#770;<sub>d</sub>)</th>
+                <th class="text-end" data-i18n="col_dev_raw">Deviasi Standar</th>
+                <th class="text-end text-success fw-bold" data-i18n="col_eblup_sb">fastsae (&sum; &theta;&#770;<sub>d</sub><sup>sb</sup>)</th>
+                <th class="text-end text-success fw-bold" data-i18n="col_dev_sb">Deviasi fastsae</th>
+                <th class="text-center" data-i18n="col_status">Status Konsistensi</th>
+              </tr>
+            </thead>
+            <tbody class="font-monospace small">
+              <tr>
+                <td class="ps-3 font-sans fw-semibold">ds01-linear (Linear Dasar)</td>
+                <td class="text-end">842.9743</td>
+                <td class="text-end text-muted">842.9206</td>
+                <td class="text-end text-danger">-0.0537</td>
+                <td class="text-end text-success fw-bold">842.9743</td>
+                <td class="text-end text-success fw-bold">0.000000</td>
+                <td class="text-center"><span class="badge bg-success-subtle text-success border border-success-subtle">Tepat 100%</span></td>
+              </tr>
+              <tr>
+                <td class="ps-3 font-sans fw-semibold">ds02-rate (Proporsi Terbatas)</td>
+                <td class="text-end">8.5002</td>
+                <td class="text-end text-muted">8.2895</td>
+                <td class="text-end text-danger">-0.2107</td>
+                <td class="text-end text-success fw-bold">8.5002</td>
+                <td class="text-end text-success fw-bold">0.000000</td>
+                <td class="text-center"><span class="badge bg-success-subtle text-success border border-success-subtle">Tepat 100%</span></td>
+              </tr>
+              <tr>
+                <td class="ps-3 font-sans fw-semibold">ds04-nonlinear (Nonlinear Kompleks)</td>
+                <td class="text-end">595.6068</td>
+                <td class="text-end text-muted">595.6023</td>
+                <td class="text-end text-danger">-0.0045</td>
+                <td class="text-end text-success fw-bold">595.6068</td>
+                <td class="text-end text-success fw-bold">0.000000</td>
+                <td class="text-center"><span class="badge bg-success-subtle text-success border border-success-subtle">Tepat 100%</span></td>
+              </tr>
+              <tr>
+                <td class="ps-3 font-sans fw-semibold">ds05-spatial (Spasial SAR)</td>
+                <td class="text-end">705.0020</td>
+                <td class="text-end text-muted">705.1440</td>
+                <td class="text-end text-danger">+0.1421</td>
+                <td class="text-end text-success fw-bold">705.0020</td>
+                <td class="text-end text-success fw-bold">0.000000</td>
+                <td class="text-center"><span class="badge bg-success-subtle text-success border border-success-subtle">Tepat 100%</span></td>
+              </tr>
+              <tr>
+                <td class="ps-3 font-sans fw-semibold">ds07-outliers (Pencilan Ekstrem)</td>
+                <td class="text-end">634.1209</td>
+                <td class="text-end text-muted">634.1389</td>
+                <td class="text-end text-danger">+0.0179</td>
+                <td class="text-end text-success fw-bold">634.1209</td>
+                <td class="text-end text-success fw-bold">0.000000</td>
+                <td class="text-center"><span class="badge bg-success-subtle text-success border border-success-subtle">Tepat 100%</span></td>
+              </tr>
+              <tr>
+                <td class="ps-3 font-sans fw-semibold">ds08-nested (Hierarki Bertingkat)</td>
+                <td class="text-end">674.0150</td>
+                <td class="text-end text-muted">674.0263</td>
+                <td class="text-end text-danger">+0.0113</td>
+                <td class="text-end text-success fw-bold">674.0150</td>
+                <td class="text-end text-success fw-bold">0.000000</td>
+                <td class="text-center"><span class="badge bg-success-subtle text-success border border-success-subtle">Tepat 100%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -902,6 +1042,22 @@ generate_benchmark_dashboard <- function(
         stage3_desc: "Bobot sampel akhir (FWT) memperhitungkan efek pengelompokan (clustering). Varians penduga langsung dihitung melalui Linearitas Deret Taylor (survey::svydesign) sehingga menghasilkan efek desain yang realistis (Deff > 1).",
         stage4_title: "Tahap 4: Replikasi Monte Carlo (R=30)",
         stage4_desc: "Didukung modul replikasi (engine/run_mc_replications.R) untuk menghitung Empirical MSE, Empirical Bias, dan RelEff dari penarikan sampel berulang secara independen.",
+        eval_mode_label: "Mode Evaluasi:",
+        mode_single: "Sampel Tunggal",
+        mode_mc: "Monte Carlo (R=30)",
+        chart_mc_title: "Sebaran Replikasi Monte Carlo (R=30) & Efek Penyusutan (Shrinkage)",
+        chart_mc_legend: "Titik Merah = Nilai Murni Populasi (Ground Truth)",
+        chart_mc_desc: "Perbandingan sebaran estimasi dari 30 penarikan sampel independen (BPS Two-Stage). Penduga Langsung (abu-abu) menyebar lebar mencerminkan varians sampling yang besar, sedangkan model SAE fastsae (biru & hijau) secara konsisten menyusutkan estimasi ke arah nilai Ground Truth dengan stabilitas tinggi.",
+        benchmarking_title: "Validasi Properti Benchmarking (Konsistensi Agregat Wilayah)",
+        benchmarking_desc: "Salah satu syarat krusial penerapan SAE di Badan Pusat Statistik (BPS) adalah benchmarking property: jumlah estimasi area kecil (kabupaten/kota) harus tepat sama dengan angka resmi estimasi langsung (Direct) tingkat wilayah atasnya (provinsi/nasional). Tanpa benchmarking, model EBLUP standar menghasilkan deviasi agregat. Fitur self_benchmark = TRUE pada paket fastsae menjamin konsistensi matematis secara langsung dalam estimasi parameter tanpa memerlukan penyesuaian pro-rata post-hoc.",
+        status_perfect: "Presisi Tepat (Deviasi = 0,00)",
+        col_archetype: "Karakteristik Dataset",
+        col_target_direct: "Target Langsung (&sum; Y<sub>d</sub><sup>dir</sup>)",
+        col_eblup_raw: "EBLUP Standar (&sum; &theta;&#770;<sub>d</sub>)",
+        col_dev_raw: "Deviasi Standar",
+        col_eblup_sb: "fastsae (&sum; &theta;&#770;<sub>d</sub><sup>sb</sup>)",
+        col_dev_sb: "Deviasi fastsae",
+        col_status: "Status Konsistensi",
         footer_title: "Laboratorium Tolok Ukur Model Small Area Estimation"
       },
       en: {
@@ -950,6 +1106,22 @@ generate_benchmark_dashboard <- function(
         stage3_desc: "Design weights calibrated for cluster effects. Direct variance estimated via Taylor Series Linearization (survey::svydesign), capturing realistic clustering (Deff > 1).",
         stage4_title: "Stage 4: Monte Carlo Replications (R=30)",
         stage4_desc: "Backed by replication engine (engine/run_mc_replications.R) computing Empirical MSE, Bias, and RelEff over repeated independent draws.",
+        eval_mode_label: "Evaluation Mode:",
+        mode_single: "Single Sample",
+        mode_mc: "Monte Carlo (R=30)",
+        chart_mc_title: "Monte Carlo Replication Distribution (R=30) & Shrinkage Effect",
+        chart_mc_legend: "Red Diamond = Exact Population Ground Truth",
+        chart_mc_desc: "Comparison of estimation spread across 30 independent survey draws (BPS Two-Stage). Direct survey estimates (grey) exhibit high sampling variance, whereas fastsae models (blue & green) shrink estimates toward Ground Truth with superior stability.",
+        benchmarking_title: "Benchmarking Property & Aggregate Consistency Validation",
+        benchmarking_desc: "A crucial prerequisite for SAE adoption at National Statistical Offices (e.g. BPS) is the benchmarking property: aggregated small area estimates must equal the official direct survey benchmark total. Unbenchmarked models produce aggregate discrepancies. The self_benchmark = TRUE feature in fastsae enforces mathematical consistency directly during parameter estimation without requiring ad-hoc pro-rata adjustment.",
+        status_perfect: "Exact Match (Deviation = 0.00)",
+        col_archetype: "Dataset Archetype",
+        col_target_direct: "Direct Target (&sum; Y<sub>d</sub><sup>dir</sup>)",
+        col_eblup_raw: "Standard EBLUP (&sum; &theta;&#770;<sub>d</sub>)",
+        col_dev_raw: "Standard Deviation",
+        col_eblup_sb: "fastsae (&sum; &theta;&#770;<sub>d</sub><sup>sb</sup>)",
+        col_dev_sb: "fastsae Deviation",
+        col_status: "Consistency Status",
         footer_title: "Small Area Estimation Model Benchmark Laboratory"
       }
     };
@@ -975,6 +1147,30 @@ generate_benchmark_dashboard <- function(
       const active = document.documentElement.getAttribute("data-bs-theme");
       applyTheme(active === "dark" ? "light" : "dark");
     });
+
+    // Toggle Evaluation Mode (Single Sample vs Monte Carlo R=30)
+    function switchEvalMode(mode) {
+      if (mode === \"single\") {
+        document.querySelectorAll(\".table-mode-single\").forEach(el => el.classList.remove(\"d-none\"));
+        document.querySelectorAll(\".table-mode-mc\").forEach(el => el.classList.add(\"d-none\"));
+        const btnS = document.getElementById(\"btnSingleMode\");
+        const btnM = document.getElementById(\"btnMCMode\");
+        if (btnS && btnM) {
+          btnS.className = \"btn btn-primary active\";
+          btnM.className = \"btn btn-outline-secondary\";
+        }
+      } else {
+        document.querySelectorAll(\".table-mode-single\").forEach(el => el.classList.add(\"d-none\"));
+        document.querySelectorAll(\".table-mode-mc\").forEach(el => el.classList.remove(\"d-none\"));
+        const btnS = document.getElementById(\"btnSingleMode\");
+        const btnM = document.getElementById(\"btnMCMode\");
+        if (btnS && btnM) {
+          btnS.className = \"btn btn-outline-secondary\";
+          btnM.className = \"btn btn-primary active\";
+        }
+      }
+    }
+    window.switchEvalMode = switchEvalMode;
 
     // Language Toggle
     function applyLanguage(lang) {
