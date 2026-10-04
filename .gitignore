@@ -1,0 +1,11 @@
+# History and session files
+.Rhistory
+.RData
+.RDataTmp
+.Ruserdata
+
+# RStudio files
+.Rproj.user/
+
+# macOS files
+.DS_Store
