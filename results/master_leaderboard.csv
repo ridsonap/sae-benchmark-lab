@@ -1,9 +1,9 @@
 "dataset_id","dataset_name","model","N","N_valid","ARB_pct","RRMSE_pct","RMSE","MAE","Corr","RelEff_pct","Regular_RRMSE","Outlier_RRMSE","Boundary_Violations","Peak_RAM_MB","Runtime_sec"
-"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","Direct",60,60,0.32,0.41,0.057,0.0449,0.9897,100,NA,NA,0,0.1,0
-"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","fastsaegpu_HB",60,60,0.31,0.38,0.0541,0.043,0.9906,110.9,NA,NA,0,159.6,13.35
-"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","Enhanced_MERF",60,60,0.32,0.4,0.0565,0.0446,0.9898,101.7,NA,NA,0,44.7,0.35
+"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","Direct",60,60,0.32,0.41,0.057,0.0449,0.9897,100,NA,NA,0,0,0
+"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","fastsaegpu_HB",60,60,0.31,0.38,0.0541,0.043,0.9906,110.9,NA,NA,0,160,14.04
+"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","Enhanced_MERF",60,60,0.32,0.4,0.0564,0.0448,0.9898,101.9,NA,NA,0,44.6,0.36
 "ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","fastsae_EBLUP",60,60,0.31,0.38,0.054,0.043,0.9906,111.3,NA,NA,0,2,0.02
-"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","fastsae_INLA",60,60,0.31,0.38,0.054,0.043,0.9906,111.3,NA,NA,0,137,1.81
+"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","fastsae_INLA",60,60,0.31,0.38,0.054,0.043,0.9906,111.3,NA,NA,0,136.8,1.92
 "ds02_bounded_rate","Bounded Rate (Poverty / Prevalence Rate)","Direct",60,60,24.67,36.16,0.0353,0.0269,0.9192,100,NA,NA,0,0.5,0
 "ds02_bounded_rate","Bounded Rate (Poverty / Prevalence Rate)","fastsaegpu_HB",60,60,20.63,29.15,0.0326,0.0237,0.9126,117.5,NA,NA,0,39.2,6.41
 "ds02_bounded_rate","Bounded Rate (Poverty / Prevalence Rate)","Enhanced_MERF",60,60,23.62,34.91,0.0323,0.0255,0.9173,119.6,NA,NA,0,41,0.32

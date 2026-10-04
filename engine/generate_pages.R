@@ -185,16 +185,25 @@ generate_benchmark_dashboard <- function(
     ds_label <- sprintf('<strong>%s</strong><br><small class="text-muted font-monospace">%s</small>', 
                         row$dataset_name, row$dataset_id)
     
+    order_ds <- row$dataset_id
+    order_model <- row$model
+    order_rrmse <- if (is.na(row$RRMSE_pct)) 999999 else row$RRMSE_pct
+    order_arb <- if (is.na(row$ARB_pct)) 999999 else row$ARB_pct
+    order_eff <- if (is.na(row$RelEff_pct)) -1 else row$RelEff_pct
+    order_corr <- if (is.na(row$Corr)) -1 else row$Corr
+    order_ram <- if ("Peak_RAM_MB" %in% names(row) && !is.na(row$Peak_RAM_MB)) row$Peak_RAM_MB else -1
+    order_time <- if (!is.na(row$Runtime_sec)) row$Runtime_sec else -1
+    
     r <- paste0(
       '<tr>',
-      '<td>', ds_label, '</td>',
-      '<td>', model_badge, '</td>',
-      '<td class="text-end fw-semibold">', sprintf("%.2f%%", row$RRMSE_pct), '</td>',
-      '<td class="text-end">', sprintf("%.2f%%", row$ARB_pct), '</td>',
-      '<td class="text-center">', eff_display, '</td>',
-      '<td class="text-end">', sprintf("%.4f", row$Corr), '</td>',
-      '<td class="text-end font-monospace">', ram_val, '</td>',
-      '<td class="text-end font-monospace">', runtime_val, '</td>',
+      '<td data-order="', order_ds, '" data-search="', row$dataset_id, ' ', row$dataset_name, '">', ds_label, '</td>',
+      '<td data-order="', order_model, '" data-search="', row$model, '">', model_badge, '</td>',
+      '<td class="text-end fw-semibold" data-order="', order_rrmse, '">', sprintf("%.2f%%", row$RRMSE_pct), '</td>',
+      '<td class="text-end" data-order="', order_arb, '">', sprintf("%.2f%%", row$ARB_pct), '</td>',
+      '<td class="text-center" data-order="', order_eff, '">', eff_display, '</td>',
+      '<td class="text-end" data-order="', order_corr, '">', sprintf("%.4f", row$Corr), '</td>',
+      '<td class="text-end font-monospace" data-order="', order_ram, '">', ram_val, '</td>',
+      '<td class="text-end font-monospace" data-order="', order_time, '">', runtime_val, '</td>',
       '</tr>'
     )
     rows <- c(rows, r)
@@ -379,6 +388,7 @@ generate_benchmark_dashboard <- function(
         </span>
       </div>
       <h1 class="display-5 fw-extrabold text-white mb-2">SAE Benchmark Lab</h1>
+      <p class="h5 fw-medium text-info mb-3">Official BPS Two-Stage Stratified Cluster Sampling Testbed</p>
       <p class="lead text-secondary mx-auto mb-4" style="max-width: 820px;">
         Standardized, reproducible testbed for evaluating <strong>Small Area Estimation (SAE)</strong> models under 
         two-stage stratified cluster sampling against exact finite-population Ground Truth.
@@ -388,28 +398,28 @@ generate_benchmark_dashboard <- function(
       <div class="row g-3 justify-content-center text-start mt-2">
         <div class="col-6 col-md-4 col-lg-2">
           <div class="card kpi-card p-3">
-            <span class="text-secondary small fw-medium text-uppercase">Models Evaluated</span>
+            <span class="text-secondary small fw-medium text-uppercase">Total Models</span>
             <div class="fs-3 fw-bold text-white mt-1">{{TOTAL_MODELS}}</div>
             <span class="text-muted small">Standard Battery</span>
           </div>
         </div>
         <div class="col-6 col-md-4 col-lg-2">
           <div class="card kpi-card p-3">
-            <span class="text-secondary small fw-medium text-uppercase">Archetypes</span>
+            <span class="text-secondary small fw-medium text-uppercase">8 Dataset Archetypes</span>
             <div class="fs-3 fw-bold text-white mt-1">{{TOTAL_DATASETS}}</div>
             <span class="text-muted small">Structural Challenges</span>
           </div>
         </div>
         <div class="col-6 col-md-4 col-lg-3">
           <div class="card kpi-card p-3">
-            <span class="text-secondary small fw-medium text-uppercase">Peak Rel. Efficiency</span>
+            <span class="text-secondary small fw-medium text-uppercase">Top RelEff Gain</span>
             <div class="fs-3 fw-bold text-success mt-1">{{TOP_EFF_VAL}}</div>
             <span class="text-muted small text-truncate d-block">{{TOP_EFF_DETAIL}}</span>
           </div>
         </div>
         <div class="col-6 col-md-4 col-lg-2">
           <div class="card kpi-card p-3">
-            <span class="text-secondary small fw-medium text-uppercase">Fastest Estimator</span>
+            <span class="text-secondary small fw-medium text-uppercase">Fastest Model</span>
             <div class="fs-3 fw-bold text-info mt-1">{{FASTEST_MODEL}}</div>
             <span class="text-muted small">{{FASTEST_TIME}}</span>
           </div>
@@ -430,14 +440,39 @@ generate_benchmark_dashboard <- function(
 
     <!-- Interactive Leaderboard Table Section -->
     <div class="mb-5">
-      <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-2">
+      <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-3">
         <div>
           <h2 class="h3 fw-bold text-white mb-1"><i class="fa-solid fa-trophy text-warning me-2"></i>Master Leaderboard</h2>
           <p class="text-secondary small mb-0">Empirical metrics evaluated across finite-population ground truth</p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <div class="d-flex align-items-center gap-1">
+            <label for="datasetFilter" class="text-secondary small text-nowrap"><i class="fa-solid fa-filter me-1"></i>Dataset:</label>
+            <select id="datasetFilter" class="form-select form-select-sm bg-dark text-light border-secondary">
+              <option value="">All Datasets</option>
+              <option value="ds01_continuous_linear">ds01: Continuous Linear</option>
+              <option value="ds02_bounded_rate">ds02: Bounded Rate</option>
+              <option value="ds03_highdim_sparse">ds03: High-Dim Sparse</option>
+              <option value="ds04_nonlinear_interaction">ds04: Nonlinear & Inter.</option>
+              <option value="ds05_spatial_correlated">ds05: Spatial Correlated</option>
+              <option value="ds06_spatiotemporal_panel">ds06: Spatio-Temporal Panel</option>
+              <option value="ds07_extreme_outliers">ds07: Extreme Outliers</option>
+              <option value="ds08_nested_subarea">ds08: Nested Subarea</option>
+            </select>
+          </div>
+          <div class="d-flex align-items-center gap-1">
+            <label for="modelFilter" class="text-secondary small text-nowrap"><i class="fa-solid fa-cube me-1"></i>Model:</label>
+            <select id="modelFilter" class="form-select form-select-sm bg-dark text-light border-secondary">
+              <option value="">All Models</option>
+              <option value="Direct">Direct</option>
+              <option value="fastsaegpu_HB">fastsaegpu_HB</option>
+              <option value="Enhanced_MERF">Enhanced_MERF</option>
+              <option value="fastsae_EBLUP">fastsae_EBLUP</option>
+              <option value="fastsae_INLA">fastsae_INLA</option>
+            </select>
+          </div>
           <button id="resetFiltersBtn" class="btn btn-outline-secondary btn-sm">
-            <i class="fa-solid fa-filter-circle-xmark me-1"></i> Reset Filters
+            <i class="fa-solid fa-filter-circle-xmark me-1"></i> Reset
           </button>
         </div>
       </div>
@@ -447,14 +482,14 @@ generate_benchmark_dashboard <- function(
           <table id="leaderboardTable" class="table table-hover align-middle mb-0" style="width: 100%;">
             <thead>
               <tr class="text-secondary small text-uppercase">
-                <th>Dataset Archetype</th>
+                <th>Dataset</th>
                 <th>Model</th>
                 <th class="text-end">RRMSE (%)</th>
                 <th class="text-end">ARB (%)</th>
-                <th class="text-center">Rel. Efficiency</th>
+                <th class="text-center">Rel. Efficiency (%)</th>
                 <th class="text-end">Corr</th>
-                <th class="text-end">Peak RAM</th>
-                <th class="text-end">Runtime</th>
+                <th class="text-end">Peak RAM (MB)</th>
+                <th class="text-end">Runtime (s)</th>
               </tr>
             </thead>
             <tbody>
@@ -571,8 +606,8 @@ generate_benchmark_dashboard <- function(
           <div class="card bg-dark border border-secondary border-opacity-25 h-100 p-3">
             <h5 class="fs-6 text-white fw-bold mb-2"><i class="fa-solid fa-code me-2 text-primary"></i>R API (Custom Estimator)</h5>
             <div class="code-box">
-              <button class="btn btn-outline-secondary btn-sm copy-btn" onclick="copyCode(\'r-snippet\')">
-                <i class="fa-regular fa-copy"></i> Copy
+              <button class="btn btn-outline-secondary btn-sm copy-btn" onclick="copyCode(\'r-snippet\', this)">
+                <i class="fa-regular fa-copy me-1"></i> Copy
               </button>
               <pre id="r-snippet" class="mb-0 font-monospace text-light small"><code># 1. Source the benchmark engine
 source("engine/benchmark_runner.R")
@@ -593,8 +628,8 @@ results <- run_benchmark_suite(models = list("MyModel" = my_custom_sae))</code><
           <div class="card bg-dark border border-secondary border-opacity-25 h-100 p-3">
             <h5 class="fs-6 text-white fw-bold mb-2"><i class="fa-solid fa-terminal me-2 text-info"></i>Terminal CLI</h5>
             <div class="code-box">
-              <button class="btn btn-outline-secondary btn-sm copy-btn" onclick="copyCode(\'cli-snippet\')">
-                <i class="fa-regular fa-copy"></i> Copy
+              <button class="btn btn-outline-secondary btn-sm copy-btn" onclick="copyCode(\'cli-snippet\', this)">
+                <i class="fa-regular fa-copy me-1"></i> Copy
               </button>
               <pre id="cli-snippet" class="mb-0 font-monospace text-light small"><code># Run full battery across all 8 datasets
 Rscript run_test.R
@@ -630,8 +665,8 @@ Rscript run_test.R --dataset=ds02_bounded_rate</code></pre>
     $(document).ready(function() {
       var table = $(\'#leaderboardTable\').DataTable({
         pageLength: 25,
-        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        order: [[0, "asc"], [2, "asc"]],
+        lengthMenu: [[10, 25, 40, -1], [10, 25, 40, "All"]],
+        order: [[0, "asc"], [4, "desc"]],
         language: {
           search: "_INPUT_",
           searchPlaceholder: "Search models, datasets..."
@@ -639,16 +674,65 @@ Rscript run_test.R --dataset=ds02_bounded_rate</code></pre>
         dom: \'<"d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3"lf>rt<"d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"ip>\'
       });
 
+      $(\'#datasetFilter\').on(\'change\', function() {
+        var val = $(this).val();
+        table.column(0).search(val ? val : \'\', true, false).draw();
+      });
+
+      $(\'#modelFilter\').on(\'change\', function() {
+        var val = $(this).val();
+        table.column(1).search(val ? val : \'\', true, false).draw();
+      });
+
       $(\'#resetFiltersBtn\').on(\'click\', function() {
+        $(\'#datasetFilter\').val(\'\');
+        $(\'#modelFilter\').val(\'\');
         table.search(\'\').columns().search(\'\').draw();
       });
     });
 
-    function copyCode(id) {
-      var text = document.getElementById(id).innerText;
-      navigator.clipboard.writeText(text).then(function() {
-        alert("Copied to clipboard!");
-      });
+    function copyCode(id, btn) {
+      var el = document.getElementById(id);
+      var text = el.innerText || el.textContent;
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function() {
+          showCopied(btn);
+        }).catch(function() {
+          fallbackCopy(text, btn);
+        });
+      } else {
+        fallbackCopy(text, btn);
+      }
+    }
+
+    function showCopied(btn) {
+      if (!btn) return;
+      var origHtml = btn.innerHTML;
+      btn.innerHTML = \'<i class="fa-solid fa-check text-success me-1"></i> Copied!\';
+      btn.classList.add(\'btn-success\');
+      btn.classList.remove(\'btn-outline-secondary\');
+      setTimeout(function() {
+        btn.innerHTML = origHtml;
+        btn.classList.remove(\'btn-success\');
+        btn.classList.add(\'btn-outline-secondary\');
+      }, 2000);
+    }
+
+    function fallbackCopy(text, btn) {
+      var textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        showCopied(btn);
+      } catch (err) {
+        console.error("Fallback copy failed", err);
+      }
+      document.body.removeChild(textArea);
     }
   </script>
 </body>

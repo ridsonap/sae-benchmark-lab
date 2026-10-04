@@ -134,7 +134,22 @@ run_benchmark_suite <- function(models = NULL,
   manifest <- read.csv(manifest_path, stringsAsFactors = FALSE)
   
   if (!is.null(dataset_ids)) {
-    manifest <- manifest[manifest$id %in% dataset_ids, ]
+    matched_ids <- character()
+    for (did in dataset_ids) {
+      if (did %in% manifest$id) {
+        matched_ids <- c(matched_ids, did)
+      } else {
+        sub_match <- manifest$id[grepl(paste0("^", did), manifest$id) | grepl(did, manifest$id)]
+        if (length(sub_match) > 0) {
+          matched_ids <- c(matched_ids, sub_match)
+        }
+      }
+    }
+    matched_ids <- unique(matched_ids)
+    if (length(matched_ids) == 0) {
+      stop(sprintf("No datasets matching: %s", paste(dataset_ids, collapse = ", ")))
+    }
+    manifest <- manifest[manifest$id %in% matched_ids, ]
   }
   
   # Default models to evaluate
@@ -240,23 +255,43 @@ run_benchmark_suite <- function(models = NULL,
   
   leaderboard <- do.call(rbind, all_results)
   
-  # Write leaderboard CSV and RDS (merging if running subset)
+  # Write leaderboard CSV and RDS (merging by dataset_id + model)
   lb_csv <- file.path(output_dir, "master_leaderboard.csv")
   lb_rds <- file.path(output_dir, "master_leaderboard.rds")
-  if (!is.null(dataset_ids) && file.exists(lb_csv)) {
+  if (file.exists(lb_csv)) {
     tryCatch({
       existing_lb <- read.csv(lb_csv, stringsAsFactors = FALSE)
-      keep_lb <- existing_lb[!(existing_lb$dataset_id %in% unique(leaderboard$dataset_id)), ]
+      exist_keys <- paste(existing_lb$dataset_id, existing_lb$model, sep = "___")
+      new_keys <- paste(leaderboard$dataset_id, leaderboard$model, sep = "___")
+      keep_lb <- existing_lb[!(exist_keys %in% new_keys), ]
       leaderboard <- rbind(keep_lb, leaderboard)
-      leaderboard <- leaderboard[order(leaderboard$dataset_id, leaderboard$model), ]
+      # Order datasets logically (ds01, ds02, ...) and models with standard order
+      std_models <- c("Direct", "fastsaegpu_HB", "Enhanced_MERF", "fastsae_EBLUP", "fastsae_INLA")
+      model_rank <- match(leaderboard$model, std_models)
+      model_rank[is.na(model_rank)] <- 999
+      leaderboard <- leaderboard[order(leaderboard$dataset_id, model_rank, leaderboard$model), ]
     }, error = function(e) NULL)
   }
   write.csv(leaderboard, lb_csv, row.names = FALSE)
   saveRDS(leaderboard, lb_rds)
   
   if (length(all_predictions) > 0) {
-    preds_df <- do.call(rbind, all_predictions)
-    saveRDS(preds_df, file.path(output_dir, "all_model_predictions.rds"))
+    new_preds <- do.call(rbind, all_predictions)
+    preds_file <- file.path(output_dir, "all_model_predictions.rds")
+    if (file.exists(preds_file)) {
+      tryCatch({
+        old_preds <- readRDS(preds_file)
+        old_keys <- paste(old_preds$dataset_id, old_preds$model, sep = "___")
+        new_keys <- paste(new_preds$dataset_id, new_preds$model, sep = "___")
+        keep_preds <- old_preds[!(old_keys %in% new_keys), ]
+        preds_df <- rbind(keep_preds, new_preds)
+      }, error = function(e) {
+        preds_df <- new_preds
+      })
+    } else {
+      preds_df <- new_preds
+    }
+    saveRDS(preds_df, preds_file)
   }
   
   cat("======================================================================\n")

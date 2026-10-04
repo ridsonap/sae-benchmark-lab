@@ -51,8 +51,8 @@ calculate_sae_metrics <- function(pred,
       Regular_RRMSE = NA_real_,
       Outlier_RRMSE = NA_real_,
       Boundary_Violations = NA_integer_,
-      Peak_RAM_MB = memory_mb,
-      Runtime_sec = runtime_sec,
+      Peak_RAM_MB = if (is.na(memory_mb)) NA_real_ else round(memory_mb, 2),
+      Runtime_sec = if (is.na(runtime_sec)) NA_real_ else round(runtime_sec, 2),
       stringsAsFactors = FALSE
     ))
   }
