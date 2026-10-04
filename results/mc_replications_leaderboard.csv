@@ -1,0 +1,45 @@
+"dataset_id","dataset_code","dataset_name","dataset_name_en","dataset_name_id","model","RelEff_pct","RRMSE_pct","ARB_pct","Corr","Runtime_sec","Peak_RAM_MB","Replications"
+"ds01_continuous_linear","ds01-linear","Linear Baseline","Linear Baseline","Linear Dasar","hbsae (fSAE.Area, Hierarchical Bayes)",108,0.39,0.12,0.9988,0.038,8,30
+"ds01_continuous_linear","ds01-linear","Linear Baseline","Linear Baseline","Linear Dasar","fastsae (eblup_fh, REML)",107.7,0.39,0.12,0.9988,0.001,8,30
+"ds01_continuous_linear","ds01-linear","Linear Baseline","Linear Baseline","Linear Dasar","sae (eblupFH, REML)",107.7,0.39,0.12,0.9988,0.002,8,30
+"ds01_continuous_linear","ds01-linear","Linear Baseline","Linear Baseline","Linear Dasar","fastsae (eblup_fh, REML, self benchmark)",107.3,0.39,0.12,0.9988,0.001,8,30
+"ds01_continuous_linear","ds01-linear","Linear Baseline","Linear Baseline","Linear Dasar","survey (direct, Taylor)",100,0.4,0.06,0.9997,0,8,30
+"ds02_bounded_rate","ds02-rate","Bounded Rate (0,1)","Bounded Rate (0,1)","Proporsi Terbatas (0,1)","hbsae (fSAE.Area, Hierarchical Bayes)",122.4,27.35,8.53,0.9606,0.027,8,30
+"ds02_bounded_rate","ds02-rate","Bounded Rate (0,1)","Bounded Rate (0,1)","Proporsi Terbatas (0,1)","fastsae (eblup_fh, REML)",120.2,27.18,8.79,0.9575,0.001,8,30
+"ds02_bounded_rate","ds02-rate","Bounded Rate (0,1)","Bounded Rate (0,1)","Proporsi Terbatas (0,1)","fastsae (eblup_fh, REML, self benchmark)",104,30.87,8.24,0.9627,0.001,8,30
+"ds02_bounded_rate","ds02-rate","Bounded Rate (0,1)","Bounded Rate (0,1)","Proporsi Terbatas (0,1)","survey (direct, Taylor)",100,35.75,5.43,0.9959,0,8,30
+"ds03_highdim_sparse","ds03-sparse","High-Dim Sparse","High-Dim Sparse","Dimensi Tinggi (Sparse)","hbsae (fSAE.Area, Hierarchical Bayes)",103.5,0.57,0.13,0.9999,0.061,8,30
+"ds03_highdim_sparse","ds03-sparse","High-Dim Sparse","High-Dim Sparse","Dimensi Tinggi (Sparse)","fastsae (eblup_fh, REML, self benchmark)",103.2,0.57,0.13,0.9999,0.003,8,30
+"ds03_highdim_sparse","ds03-sparse","High-Dim Sparse","High-Dim Sparse","Dimensi Tinggi (Sparse)","fastsae (eblup_fh, REML)",103.1,0.57,0.13,0.9998,0.002,8,30
+"ds03_highdim_sparse","ds03-sparse","High-Dim Sparse","High-Dim Sparse","Dimensi Tinggi (Sparse)","sae (eblupFH, REML)",103.1,0.57,0.13,0.9998,0.002,8,30
+"ds03_highdim_sparse","ds03-sparse","High-Dim Sparse","High-Dim Sparse","Dimensi Tinggi (Sparse)","survey (direct, Taylor)",100,0.58,0.09,0.9999,0,8,30
+"ds04_nonlinear_interaction","ds04-nonlinear","Nonlinear Complex","Nonlinear Complex","Nonlinear Kompleks","fastsae (eblup_fh, REML, self benchmark)",100.3,0.39,0.06,1,0.001,8,30
+"ds04_nonlinear_interaction","ds04-nonlinear","Nonlinear Complex","Nonlinear Complex","Nonlinear Kompleks","fastsae (eblup_fh, REML)",100.2,0.39,0.06,1,0.001,8,30
+"ds04_nonlinear_interaction","ds04-nonlinear","Nonlinear Complex","Nonlinear Complex","Nonlinear Kompleks","hbsae (fSAE.Area, Hierarchical Bayes)",100.2,0.39,0.06,1,0.026,8,30
+"ds04_nonlinear_interaction","ds04-nonlinear","Nonlinear Complex","Nonlinear Complex","Nonlinear Kompleks","sae (eblupFH, REML)",100.2,0.39,0.06,1,0.001,8,30
+"ds04_nonlinear_interaction","ds04-nonlinear","Nonlinear Complex","Nonlinear Complex","Nonlinear Kompleks","survey (direct, Taylor)",100,0.39,0.06,1,0,8,30
+"ds05_spatial_correlated","ds05-spatial","Spatial SAR","Spatial SAR","Spasial SAR","sae (eblupSFH, Spatial SAR)",107.5,0.46,0.12,0.9993,0.014,8,30
+"ds05_spatial_correlated","ds05-spatial","Spatial SAR","Spatial SAR","Spasial SAR","hbsae (fSAE.Area, Hierarchical Bayes)",107.1,0.46,0.11,0.9994,0.031,8,30
+"ds05_spatial_correlated","ds05-spatial","Spatial SAR","Spatial SAR","Spasial SAR","fastsae (eblup_fh, REML)",106.9,0.46,0.11,0.9994,0.002,8,30
+"ds05_spatial_correlated","ds05-spatial","Spatial SAR","Spatial SAR","Spasial SAR","sae (eblupFH, REML)",106.9,0.46,0.11,0.9994,0.002,8,30
+"ds05_spatial_correlated","ds05-spatial","Spatial SAR","Spatial SAR","Spasial SAR","fastsae (eblup_sfh, Spatial SAR, self benchmark)",106.7,0.46,0.11,0.9993,0.011,8,30
+"ds05_spatial_correlated","ds05-spatial","Spatial SAR","Spatial SAR","Spasial SAR","fastsae (eblup_fh, REML, self benchmark)",106.1,0.46,0.11,0.9994,0.001,8,30
+"ds05_spatial_correlated","ds05-spatial","Spatial SAR","Spatial SAR","Spasial SAR","survey (direct, Taylor)",100,0.48,0.07,0.9998,0,8,30
+"ds06_spatiotemporal_panel","ds06-panel","Panel Spatio-Temporal","Panel Spatio-Temporal","Panel Spasiotemporal","hbsae (fSAE.Area, Hierarchical Bayes)",107.4,0.44,0.14,0.9994,0.031,8,30
+"ds06_spatiotemporal_panel","ds06-panel","Panel Spatio-Temporal","Panel Spatio-Temporal","Panel Spasiotemporal","fastsae (eblup_fh, REML)",107.2,0.45,0.14,0.9994,0.001,8,30
+"ds06_spatiotemporal_panel","ds06-panel","Panel Spatio-Temporal","Panel Spatio-Temporal","Panel Spasiotemporal","sae (eblupFH, REML)",107.2,0.45,0.14,0.9994,0.002,8,30
+"ds06_spatiotemporal_panel","ds06-panel","Panel Spatio-Temporal","Panel Spatio-Temporal","Panel Spasiotemporal","fastsae (eblup_fh, REML, self benchmark)",106.6,0.45,0.14,0.9994,0.001,8,30
+"ds06_spatiotemporal_panel","ds06-panel","Panel Spatio-Temporal","Panel Spatio-Temporal","Panel Spasiotemporal","survey (direct, Taylor)",100,0.46,0.07,0.9998,0,8,30
+"ds07_extreme_outliers","ds07-outliers","Extreme Outliers","Extreme Outliers","Pencilan Ekstrem","saeRobust (rfh, Robust Huber)",109.5,0.49,0.13,0.9996,0.104,8,30
+"ds07_extreme_outliers","ds07-outliers","Extreme Outliers","Extreme Outliers","Pencilan Ekstrem","fastsae (eblup_fh, REML)",101,0.51,0.07,0.9998,0.001,8,30
+"ds07_extreme_outliers","ds07-outliers","Extreme Outliers","Extreme Outliers","Pencilan Ekstrem","hbsae (fSAE.Area, Hierarchical Bayes)",101,0.51,0.07,0.9998,0.027,8,30
+"ds07_extreme_outliers","ds07-outliers","Extreme Outliers","Extreme Outliers","Pencilan Ekstrem","sae (eblupFH, REML)",101,0.51,0.07,0.9998,0.002,8,30
+"ds07_extreme_outliers","ds07-outliers","Extreme Outliers","Extreme Outliers","Pencilan Ekstrem","fastsae (eblup_fh, REML, self benchmark)",100.9,0.51,0.07,0.9998,0.001,8,30
+"ds07_extreme_outliers","ds07-outliers","Extreme Outliers","Extreme Outliers","Pencilan Ekstrem","survey (direct, Taylor)",100,0.51,0.07,0.9999,0,8,30
+"ds08_nested_subarea","ds08-nested","Nested Hierarchy","Nested Hierarchy","Hierarki Bertingkat","fastsae (eblup_twofold, REML)",112.1,0.42,0.15,0.9988,0.001,8,30
+"ds08_nested_subarea","ds08-nested","Nested Hierarchy","Nested Hierarchy","Hierarki Bertingkat","fastsae (eblup_twofold, REML, self benchmark)",111,0.42,0.14,0.9988,0.002,8,30
+"ds08_nested_subarea","ds08-nested","Nested Hierarchy","Nested Hierarchy","Hierarki Bertingkat","hbsae (fSAE.Area, Hierarchical Bayes)",108.4,0.42,0.13,0.9991,0.032,8,30
+"ds08_nested_subarea","ds08-nested","Nested Hierarchy","Nested Hierarchy","Hierarki Bertingkat","fastsae (eblup_fh, REML)",108,0.42,0.13,0.9991,0.001,8,30
+"ds08_nested_subarea","ds08-nested","Nested Hierarchy","Nested Hierarchy","Hierarki Bertingkat","sae (eblupFH, REML)",108,0.42,0.13,0.9991,0.002,8,30
+"ds08_nested_subarea","ds08-nested","Nested Hierarchy","Nested Hierarchy","Hierarki Bertingkat","fastsae (eblup_fh, REML, self benchmark)",107.2,0.43,0.13,0.9991,0.001,8,30
+"ds08_nested_subarea","ds08-nested","Nested Hierarchy","Nested Hierarchy","Hierarki Bertingkat","survey (direct, Taylor)",100,0.44,0.06,0.9998,0,8,30

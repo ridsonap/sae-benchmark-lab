@@ -783,7 +783,7 @@ generate_benchmark_dashboard <- function(
         </p>
 
         <div class="row g-3">
-          <div class="col-md-4">
+          <div class="col-md-3">
             <div class="p-3 rounded bg-body-tertiary border h-100">
               <h6 class="fw-bold mb-1"><span class="badge bg-primary rounded-circle me-1">1</span> <span data-i18n="stage1_title">Tahap 1: Pemilihan Blok Sensus (PSU)</span></h6>
               <p class="text-muted small mb-2" data-i18n="stage1_desc">
@@ -795,7 +795,7 @@ generate_benchmark_dashboard <- function(
             </div>
           </div>
 
-          <div class="col-md-4">
+          <div class="col-md-3">
             <div class="p-3 rounded bg-body-tertiary border h-100">
               <h6 class="fw-bold mb-1"><span class="badge bg-info rounded-circle me-1">2</span> <span data-i18n="stage2_title">Tahap 2: Pemilihan Rumah Tangga (SSU)</span></h6>
               <p class="text-muted small mb-2" data-i18n="stage2_desc">
@@ -807,7 +807,7 @@ generate_benchmark_dashboard <- function(
             </div>
           </div>
 
-          <div class="col-md-4">
+          <div class="col-md-3">
             <div class="p-3 rounded bg-body-tertiary border h-100">
               <h6 class="fw-bold mb-1"><span class="badge bg-success rounded-circle me-1">3</span> <span data-i18n="stage3_title">Tahap 3: Pembobotan dan Varians Taylor</span></h6>
               <p class="text-muted small mb-2" data-i18n="stage3_desc">
@@ -815,6 +815,18 @@ generate_benchmark_dashboard <- function(
               </p>
               <div class="font-monospace text-success small py-1 px-2 bg-body rounded border">
                 w<sub>dhij</sub> = M<sub>dh</sub> / (10 a<sub>dh</sub>)
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="p-3 rounded bg-body-tertiary border h-100">
+              <h6 class="fw-bold mb-1"><span class="badge bg-warning text-dark rounded-circle me-1">4</span> <span data-i18n="stage4_title">Tahap 4: Replikasi Monte Carlo (R=30)</span></h6>
+              <p class="text-muted small mb-2" data-i18n="stage4_desc">
+                Didukung modul replikasi (<code>engine/run_mc_replications.R</code>) untuk menghitung Empirical MSE, Empirical Bias, dan RelEff dari penarikan sampel berulang secara independen.
+              </p>
+              <div class="font-monospace text-warning small py-1 px-2 bg-body rounded border">
+                MSE<sub>d</sub> = &sum; (&theta;&#770;<sub>d</sub><sup>(r)</sup> - Y<sub>d</sub>)<sup>2</sup> / R
               </div>
             </div>
           </div>
@@ -888,6 +900,8 @@ generate_benchmark_dashboard <- function(
         stage2_desc: "Penarikan sampel sistematik tepat 10 rumah tangga per BS terpilih dengan nomor acak awal (random start).",
         stage3_title: "Tahap 3: Pembobotan dan Varians Taylor",
         stage3_desc: "Bobot sampel akhir (FWT) memperhitungkan efek pengelompokan (clustering). Varians penduga langsung dihitung melalui Linearitas Deret Taylor (survey::svydesign) sehingga menghasilkan efek desain yang realistis (Deff > 1).",
+        stage4_title: "Tahap 4: Replikasi Monte Carlo (R=30)",
+        stage4_desc: "Didukung modul replikasi (engine/run_mc_replications.R) untuk menghitung Empirical MSE, Empirical Bias, dan RelEff dari penarikan sampel berulang secara independen.",
         footer_title: "Laboratorium Tolok Ukur Model Small Area Estimation"
       },
       en: {
@@ -934,6 +948,8 @@ generate_benchmark_dashboard <- function(
         stage2_desc: "Systematic sampling of exactly 10 households per sampled Census Block with a random start.",
         stage3_title: "Stage 3: Weights & Taylor Linearization",
         stage3_desc: "Design weights calibrated for cluster effects. Direct variance estimated via Taylor Series Linearization (survey::svydesign), capturing realistic clustering (Deff > 1).",
+        stage4_title: "Stage 4: Monte Carlo Replications (R=30)",
+        stage4_desc: "Backed by replication engine (engine/run_mc_replications.R) computing Empirical MSE, Bias, and RelEff over repeated independent draws.",
         footer_title: "Small Area Estimation Model Benchmark Laboratory"
       }
     };
