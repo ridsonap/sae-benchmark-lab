@@ -27,14 +27,14 @@ short_names_en <- c(
 )
 
 short_names_id <- c(
-  "ds01_continuous_linear" = "Linier Baseline",
-  "ds02_bounded_rate" = "Tingkat Bounded (0,1)",
+  "ds01_continuous_linear" = "Linear Dasar",
+  "ds02_bounded_rate" = "Proporsi Terbatas (0,1)",
   "ds03_highdim_sparse" = "Dimensi Tinggi (Sparse)",
-  "ds04_nonlinear_interaction" = "Nonlinier Kompleks",
+  "ds04_nonlinear_interaction" = "Nonlinear Kompleks",
   "ds05_spatial_correlated" = "Spasial SAR",
-  "ds06_spatiotemporal_panel" = "Panel Spasio-Temporal",
-  "ds07_extreme_outliers" = "Outlier Ekstrem",
-  "ds08_nested_subarea" = "Hierarki Bersarang"
+  "ds06_spatiotemporal_panel" = "Panel Spasiotemporal",
+  "ds07_extreme_outliers" = "Pencilan Ekstrem",
+  "ds08_nested_subarea" = "Hierarki Bertingkat"
 )
 
 dataset_codes <- c(

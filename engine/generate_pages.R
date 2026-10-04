@@ -5,9 +5,10 @@
 #' - Clean hero title without shouting BPS testbed (moved to methodology section)
 #' - Separate tables per dataset archetype with clean short names
 #' - Standardized model names: nama package (fungsi, fitur/spesifikasi)
+#' - Separated Rank and Model columns for maximum visual cleanliness
 #' - Highlighted best value cells in each metric column
 #' - Interactive Chart.js charts (Runtime vs Efficiency, Efficiency bars) with dataset filter
-#' - Bilingual switch (Bahasa Indonesia & English) via navbar button
+#' - Bilingual switch (Bahasa Indonesia & English) adhering to EYD V & natural domain terminology
 
 suppressPackageStartupMessages({
   library(dplyr)
@@ -60,7 +61,7 @@ generate_benchmark_dashboard <- function(
     summarise(mean_time = mean(Runtime_sec, na.rm = TRUE), .groups = "drop") %>%
     arrange(mean_time)
   fastest_model_name <- if (nrow(model_runtimes) > 0) model_runtimes$model[1] else "N/A"
-  fastest_model_time <- if (nrow(model_runtimes) > 0) sprintf("%.2fs avg", model_runtimes$mean_time[1]) else "N/A"
+  fastest_model_time <- if (nrow(model_runtimes) > 0) sprintf("%.2fs rata-rata", model_runtimes$mean_time[1]) else "N/A"
   
   # Lowest non-direct RAM
   model_ram <- non_direct %>%
@@ -69,97 +70,97 @@ generate_benchmark_dashboard <- function(
     summarise(mean_ram = mean(Peak_RAM_MB, na.rm = TRUE), .groups = "drop") %>%
     arrange(mean_ram)
   lowest_ram_model <- if (nrow(model_ram) > 0) model_ram$model[1] else "N/A"
-  lowest_ram_val <- if (nrow(model_ram) > 0) sprintf("%.1f MB avg", model_ram$mean_ram[1]) else "N/A"
+  lowest_ram_val <- if (nrow(model_ram) > 0) sprintf("%.1f MB rata-rata", model_ram$mean_ram[1]) else "N/A"
   
-  # Dataset archetype dictionary with bilingual metadata
+  # Dataset archetype dictionary with refined bilingual metadata (EYD V & KBBI compliant)
   dataset_meta <- list(
     "ds01_continuous_linear" = list(
       code = "ds01-linear",
       name_en = "Linear Baseline",
-      name_id = "Linier Baseline",
+      name_id = "Linear Dasar",
       badge_en = "Continuous Linear",
-      badge_id = "Linier Kontinu",
+      badge_id = "Linear Kontinu",
       dgp_en = "Log per-capita household expenditure, 3 linear covariates, normal random effects.",
-      dgp_id = "Log pengeluaran per kapita rumah tangga, 3 kovariat linier, efek acak normal.",
+      dgp_id = "Log pengeluaran per kapita rumah tangga dengan 3 kovariat linear dan pengaruh acak normal.",
       challenge_en = "Baseline shrinkage efficiency gain of EBLUP and Hierarchical Bayes over Direct.",
-      challenge_id = "Efisiensi awal penyusutan EBLUP dan Hierarchical Bayes terhadap Direct."
+      challenge_id = "Penyusutan (shrinkage) awal untuk menguji efisiensi EBLUP dan Hierarchical Bayes dibanding Penduga Langsung."
     ),
     "ds02_bounded_rate" = list(
       code = "ds02-rate",
       name_en = "Bounded Rate (0,1)",
-      name_id = "Tingkat Bounded (0,1)",
+      name_id = "Proporsi Terbatas (0,1)",
       badge_en = "Unit Interval (0, 1)",
-      badge_id = "Interval Unit (0, 1)",
+      badge_id = "Interval Satuan (0, 1)",
       dgp_en = "Household poverty indicators aggregated to district rates strictly bounded in (0, 1).",
-      dgp_id = "Indikator kemiskinan rumah tangga diagregasi ke tingkat kabupaten dalam rentang (0, 1).",
+      dgp_id = "Indikator kemiskinan rumah tangga diagregasikan menjadi proporsi kabupaten pada rentang ketat (0, 1).",
       challenge_en = "Evaluates Beta Stan HMC and logit links; prevents rates < 0 or > 100%.",
-      challenge_id = "Menguji Beta Stan HMC dan transformasi logit; mencegah tingkat < 0 atau > 100%."
+      challenge_id = "Menguji model Beta Stan HMC dan transformasi logit agar estimasi tidak bernilai negatif atau melebihi 100%."
     ),
     "ds03_highdim_sparse" = list(
       code = "ds03-sparse",
       name_en = "High-Dim Sparse",
       name_id = "Dimensi Tinggi (Sparse)",
       badge_en = "25 Auxiliary Features",
-      badge_id = "25 Fitur Tambahan",
+      badge_id = "25 Peubah Penjelas",
       dgp_en = "25 area-level features containing only 3 true signals and 22 collinear noise variables.",
-      dgp_id = "25 prediktor tingkat area dengan hanya 3 sinyal nyata dan 22 variabel derau.",
+      dgp_id = "25 peubah tingkat area dengan 3 sinyal nyata dan 22 peubah derau multikolinear.",
       challenge_en = "Evaluates regularization, horseshoe shrinkage, and feature screening against overfitting.",
-      challenge_id = "Menguji regularisasi, penyusutan horseshoe, dan seleksi fitur dari overfitting."
+      challenge_id = "Menguji regularisasi, penyusutan horseshoe, dan penapisan fitur untuk mencegah lewat-tata (overfitting)."
     ),
     "ds04_nonlinear_interaction" = list(
       code = "ds04-nonlinear",
       name_en = "Nonlinear Complex",
-      name_id = "Nonlinier Kompleks",
+      name_id = "Nonlinear Kompleks",
       badge_en = "Tree / Machine Learning",
       badge_id = "Tree / Machine Learning",
       dgp_en = "Complex DGP with sine waves, quadratic terms, square roots, and multiplicative interactions.",
-      dgp_id = "DGP kompleks dengan gelombang sinus, kuadratik, akar, dan interaksi multiplikatif.",
+      dgp_id = "Pembangkitan data nonlinier dengan gelombang sinus, suku kuadratik, akar kuadrat, dan interaksi perkalian.",
       challenge_en = "Linear Fay-Herriot misspecification; tests Mixed Effects Random Forests (MERF).",
-      challenge_id = "Miskualifikasi model linier; menguji Mixed Effects Random Forests (MERF)."
+      challenge_id = "Menguji ketahanan model nonparametrik MERF ketika model linear Fay-Herriot mengalami kesalahan spesifikasi."
     ),
     "ds05_spatial_correlated" = list(
       code = "ds05-spatial",
       name_en = "Spatial SAR",
       name_id = "Spasial SAR",
       badge_en = "SAR rho=0.65 (Matrix W)",
-      badge_id = "SAR rho=0.65 (Matriks W)",
+      badge_id = "SAR rho=0,65 (Matriks W)",
       dgp_en = "Area random effects generated via simultaneous autoregressive SAR (rho = 0.65) over Queen matrix.",
-      dgp_id = "Efek acak area dibangkitkan dari proses SAR autoregresif (rho = 0.65) dengan matriks Queen.",
+      dgp_id = "Pengaruh acak area dibangkitkan dari proses autoregresif spasial SAR (rho = 0,65) dengan matriks ketetanggaan Queen.",
       challenge_en = "Spatial borrowing of strength through Spatial Fay-Herriot (SEBLUP) and INLA Besag.",
-      challenge_id = "Peminjaman kekuatan spasial melalui Spatial Fay-Herriot (SEBLUP) dan INLA Besag."
+      challenge_id = "Pemanfaatan korelasi spasial antarwilayah melalui Spatial Fay-Herriot (SEBLUP) dan model INLA Besag."
     ),
     "ds06_spatiotemporal_panel" = list(
       code = "ds06-panel",
       name_en = "Panel Spatio-Temporal",
-      name_id = "Panel Spasio-Temporal",
+      name_id = "Panel Spasiotemporal",
       badge_en = "Panel D=50 x T=5",
       badge_id = "Panel D=50 x T=5",
       dgp_en = "Repeated survey panel across 5 survey rounds with AR(1) autocorrelation (phi = 0.70).",
-      dgp_id = "Panel survei berulang 5 putaran dengan autokorelasi temporal AR(1) (phi = 0.70).",
+      dgp_id = "Panel survei berulang 5 putaran dengan autokorelasi serial AR(1) (phi = 0,70).",
       challenge_en = "Dynamic temporal filters and longitudinal borrowing of strength across time and space.",
-      challenge_id = "Filter dinamik temporal dan peminjaman kekuatan melintasi ruang dan waktu."
+      challenge_id = "Penyaringan dinamik runtut waktu dan pemanfaatan kekuatan informasi lintas ruang dan waktu."
     ),
     "ds07_extreme_outliers" = list(
       code = "ds07-outliers",
       name_en = "Extreme Outliers",
-      name_id = "Outlier Ekstrem",
+      name_id = "Pencilan Ekstrem",
       badge_en = "Robust Huber SAE",
-      badge_id = "Robust Huber SAE",
+      badge_id = "Huber Robust SAE",
       dgp_en = "Contaminated response generating 4 disaster shock districts with +/- 8 sigma outlier shocks.",
-      dgp_id = "Data terkontaminasi dengan 4 kabupaten syok bencana (+/- 8 sigma dari tren regresi).",
+      dgp_id = "Data terkontaminasi dengan 4 kabupaten yang mengalami guncangan ekstrem (+/- 8 sigma dari tren regresi).",
       challenge_en = "Verifies robust M-estimation, Huber EBLUP (saeRobust), and heavy-tailed shrinkage.",
-      challenge_id = "Menguji estimasi M-robust, Huber EBLUP (saeRobust), dan ketahanan terhadap leverage."
+      challenge_id = "Menguji ketahanan estimasi M-robust, Huber EBLUP (saeRobust), dan penyusutan berekor tebal terhadap titik pengungkit."
     ),
     "ds08_nested_subarea" = list(
       code = "ds08-nested",
       name_en = "Nested Hierarchy",
-      name_id = "Hierarki Bersarang",
+      name_id = "Hierarki Bertingkat",
       badge_en = "Two-Fold Subarea",
-      badge_id = "Dua Tingkat Bersarang",
+      badge_id = "Dua Tingkat Wilayah",
       dgp_en = "Hierarchical structure with districts (kabupaten) nested inside administrative provinces.",
-      dgp_id = "Struktur bertingkat kabupaten bersarang dalam provinsi administratif (v_p + u_pd).",
+      dgp_id = "Struktur bertingkat dengan kabupaten yang bersarang di dalam provinsi administratif (v_p + u_pd).",
       challenge_en = "Multi-level borrowing of strength across multiple administrative tiers.",
-      challenge_id = "Peminjaman kekuatan bertingkat antartingkat administrasi wilayah."
+      challenge_id = "Pemanfaatan informasi bertingkat antartingkat hierarki administratif."
     )
   )
   
@@ -207,7 +208,7 @@ generate_benchmark_dashboard <- function(
     }
   }
   
-  # Build per-dataset HTML tables
+  # Build per-dataset HTML tables with SEPARATED RANK AND MODEL COLUMNS
   dataset_tables_html <- list()
   for (ds_id in names(dataset_meta)) {
     meta <- dataset_meta[[ds_id]]
@@ -221,9 +222,9 @@ generate_benchmark_dashboard <- function(
     for (j in seq_len(nrow(sub_df))) {
       row <- sub_df[j, ]
       
-      # Rank badge
+      # Rank badge (dedicated clean cell)
       rank_badge <- if (j == 1) {
-        '<span class="rank-badge rank-1"><i class="fa-solid fa-crown text-warning"></i> #1</span>'
+        '<span class="rank-badge rank-1"><i class="fa-solid fa-crown text-warning me-1"></i>#1</span>'
       } else if (j == 2) {
         '<span class="rank-badge rank-2">#2</span>'
       } else if (j == 3) {
@@ -231,8 +232,6 @@ generate_benchmark_dashboard <- function(
       } else {
         sprintf('<span class="rank-badge rank-n">#%d</span>', j)
       }
-      
-      model_html <- paste(rank_badge, get_package_badge(row$model))
       
       tol <- 1e-4
       is_best_rrmse <- !is.na(row$RRMSE_pct) && !is.na(b$min_rrmse) && abs(row$RRMSE_pct - b$min_rrmse) <= tol
@@ -287,7 +286,8 @@ generate_benchmark_dashboard <- function(
       
       row_html <- paste0(
         '<tr>',
-        '<td>', model_html, '</td>',
+        '<td class="text-center">', rank_badge, '</td>',
+        '<td>', get_package_badge(row$model), '</td>',
         cell_eff,
         cell_rrmse,
         cell_arb,
@@ -302,9 +302,9 @@ generate_benchmark_dashboard <- function(
     
     extra_th_en <- ""
     if (is_outlier_ds) {
-      extra_th_en <- '<th class="text-end" data-i18n="col_outlier_rrmse">Outlier RRMSE</th>'
+      extra_th_en <- '<th class="text-end" data-i18n="col_outlier_rrmse">RRMSE Pencilan</th>'
     } else if (is_bounded_ds) {
-      extra_th_en <- '<th class="text-center" data-i18n="col_violations">Violations (&lt;0 / &gt;1)</th>'
+      extra_th_en <- '<th class="text-center" data-i18n="col_violations">Pelanggaran Batas (&lt;0 / &gt;1)</th>'
     }
     
     table_wrapper <- paste0(
@@ -312,14 +312,15 @@ generate_benchmark_dashboard <- function(
       '<table class="table table-hover align-middle mb-0 benchmark-table">',
       '<thead>',
       '<tr class="table-header-row text-uppercase small">',
-      '<th data-i18n="col_model">Model / Package</th>',
-      '<th class="text-end" data-i18n="col_releff">Rel. Efficiency (%)</th>',
+      '<th class="text-center" style="width: 84px;" data-i18n="col_rank">Peringkat</th>',
+      '<th data-i18n="col_model">Model / Paket</th>',
+      '<th class="text-end" data-i18n="col_releff">Efisiensi Relatif (%)</th>',
       '<th class="text-end" data-i18n="col_rrmse">RRMSE (%)</th>',
       '<th class="text-end" data-i18n="col_arb">ARB (%)</th>',
-      '<th class="text-end" data-i18n="col_corr">Corr</th>',
+      '<th class="text-end" data-i18n="col_corr">Korelasi</th>',
       extra_th_en,
-      '<th class="text-end" data-i18n="col_ram">Peak RAM</th>',
-      '<th class="text-end" data-i18n="col_runtime">Runtime</th>',
+      '<th class="text-end" data-i18n="col_ram">RAM Puncak</th>',
+      '<th class="text-end" data-i18n="col_runtime">Waktu</th>',
       '</tr>',
       '</thead>',
       '<tbody>',
@@ -389,7 +390,7 @@ generate_benchmark_dashboard <- function(
               <h4 class="h5 fw-bold mb-0 text-title" data-en="%s" data-id="%s">%s</h4>
             </div>
             <div class="text-end">
-              <span class="text-muted small"><i class="fa-solid fa-bullseye text-warning me-1"></i><span data-i18n="benchmark_goal">Fokus Pengujian:</span></span>
+              <span class="text-muted small"><i class="fa-solid fa-bullseye text-warning me-1"></i><span data-i18n="benchmark_goal">Tujuan Pengujian:</span></span>
               <p class="text-body-secondary small mb-0 challenge-text" data-en="%s" data-id="%s">%s</p>
             </div>
           </div>
@@ -554,21 +555,21 @@ generate_benchmark_dashboard <- function(
       border-radius: 4px;
     }
 
-    /* Rank badges */
+    /* Rank badges (distinct neat column) */
     .rank-badge {
-      display: inline-block;
-      min-width: 28px;
-      text-align: center;
-      font-size: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      font-size: 0.8rem;
       font-weight: 700;
-      padding: 2px 6px;
+      padding: 3px 8px;
       border-radius: 6px;
-      margin-right: 6px;
     }
-    .rank-1 { background-color: rgba(234, 179, 8, 0.15); color: #ca8a04; border: 1px solid rgba(234, 179, 8, 0.3); }
-    .rank-2 { background-color: rgba(148, 163, 184, 0.15); color: #64748b; border: 1px solid rgba(148, 163, 184, 0.3); }
-    .rank-3 { background-color: rgba(217, 119, 6, 0.15); color: #b45309; border: 1px solid rgba(217, 119, 6, 0.3); }
-    .rank-n { background-color: transparent; color: var(--text-muted); }
+    .rank-1 { background-color: rgba(234, 179, 8, 0.15); color: #ca8a04; border: 1px solid rgba(234, 179, 8, 0.35); }
+    .rank-2 { background-color: rgba(148, 163, 184, 0.15); color: #64748b; border: 1px solid rgba(148, 163, 184, 0.35); }
+    .rank-3 { background-color: rgba(217, 119, 6, 0.15); color: #b45309; border: 1px solid rgba(217, 119, 6, 0.35); }
+    .rank-n { background-color: transparent; color: var(--text-muted); font-weight: 600; }
 
     /* Package Badges */
     .pkg-badge {
@@ -649,19 +650,19 @@ generate_benchmark_dashboard <- function(
     <div class="container-xl">
       <div class="d-flex justify-content-center gap-2 mb-2 flex-wrap">
         <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">
-          <i class="fa-solid fa-layer-group me-1"></i> 8 Dataset Archetypes
+          <i class="fa-solid fa-layer-group me-1"></i> <span data-i18n="badge_archetypes">8 Ragam Dataset</span>
         </span>
         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
-          <i class="fa-solid fa-bullseye me-1"></i> Exact Ground Truth
+          <i class="fa-solid fa-bullseye me-1"></i> <span data-i18n="badge_ground_truth">Populasi Murni (Ground Truth)</span>
         </span>
         <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-1">
-          <i class="fa-solid fa-microchip me-1"></i> Profiling Waktu & RAM
+          <i class="fa-solid fa-microchip me-1"></i> <span data-i18n="badge_profiling">Profil Waktu & Memori</span>
         </span>
       </div>
 
       <h1 class="display-6 fw-bold mb-2">SAE Benchmark Lab</h1>
       <p class="lead text-muted mx-auto mb-4" style="max-width: 760px;" data-i18n="hero_subtitle">
-        Tolok ukur terstandar evaluasi model Small Area Estimation (SAE) terhadap Ground Truth populasi murni dengan metrik akurasi, efisiensi relatif, dan latensi komputasi.
+        Tolok ukur terstandar untuk mengevaluasi model Small Area Estimation (SAE) terhadap nilai populasi murni (Ground Truth) berdasarkan akurasi, efisiensi relatif, dan efisiensi komputasi.
       </p>
 
       <!-- KPI Summary Cards -->
@@ -670,19 +671,19 @@ generate_benchmark_dashboard <- function(
           <div class="kpi-card p-3">
             <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_total_models">Total Model</span>
             <div class="fs-4 fw-bold text-body mt-1">{{TOTAL_MODELS}}</div>
-            <span class="text-muted small">Standard & Robust</span>
+            <span class="text-muted small" data-i18n="kpi_total_models_sub">Standar & Robust</span>
           </div>
         </div>
         <div class="col-6 col-md-3 col-lg-2">
           <div class="kpi-card p-3">
-            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_datasets">Arketipe Data</span>
+            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_datasets">Ragam Dataset</span>
             <div class="fs-4 fw-bold text-body mt-1">{{TOTAL_DATASETS}}</div>
-            <span class="text-muted small">Tantangan SAE</span>
+            <span class="text-muted small" data-i18n="kpi_datasets_sub">Tantangan SAE</span>
           </div>
         </div>
         <div class="col-6 col-md-3 col-lg-3">
           <div class="kpi-card p-3">
-            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_top_gain">Efisiensi Maksimal</span>
+            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_top_gain">Efisiensi Tertinggi</span>
             <div class="fs-4 fw-bold text-success mt-1">{{TOP_EFF_VAL}}</div>
             <span class="text-muted small text-truncate d-block">{{TOP_EFF_MODEL}} ({{TOP_EFF_DS}})</span>
           </div>
@@ -696,7 +697,7 @@ generate_benchmark_dashboard <- function(
         </div>
         <div class="col-6 col-md-3 col-lg-2">
           <div class="kpi-card p-3">
-            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_lowest_ram">Hemat Memori</span>
+            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_lowest_ram">Memori Terendah</span>
             <div class="fs-4 fw-bold text-info mt-1 text-truncate">{{LOWEST_RAM_MODEL}}</div>
             <span class="text-muted small">{{LOWEST_RAM_VAL}}</span>
           </div>
@@ -713,7 +714,7 @@ generate_benchmark_dashboard <- function(
       <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
           <h2 class="h4 fw-bold mb-1"><i class="fa-solid fa-chart-scatter text-primary me-2"></i><span data-i18n="chart_section_title">Visualisasi Interaktif Trade-Off Model</span></h2>
-          <p class="text-muted small mb-0" data-i18n="chart_section_subtitle">Eksplorasi hubungan waktu komputasi versus akurasi dan efisiensi relatif model</p>
+          <p class="text-muted small mb-0" data-i18n="chart_section_subtitle">Analisis perbandingan antara kecepatan komputasi, presisi estimasi, dan efisiensi relatif model</p>
         </div>
         <div class="d-flex align-items-center gap-2">
           <label for="chartDatasetSelect" class="text-muted small text-nowrap fw-semibold"><i class="fa-solid fa-filter me-1"></i><span data-i18n="filter_dataset">Pilih Dataset:</span></label>
@@ -728,8 +729,8 @@ generate_benchmark_dashboard <- function(
         <div class="col-lg-7">
           <div class="chart-container-box">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <h5 class="fs-6 fw-bold mb-0"><i class="fa-solid fa-gauge-high text-info me-1"></i> <span data-i18n="chart_scatter_title">Runtime vs Efisiensi Relatif (Pareto Frontier)</span></h5>
-              <span class="badge bg-light text-dark border small" data-i18n="chart_scatter_badge">Makin ke atas & kiri makin unggul</span>
+              <h5 class="fs-6 fw-bold mb-0"><i class="fa-solid fa-gauge-high text-info me-1"></i> <span data-i18n="chart_scatter_title">Waktu Komputasi vs Efisiensi Relatif (Pareto Frontier)</span></h5>
+              <span class="badge bg-light text-dark border small" data-i18n="chart_scatter_badge">Makin ke atas dan kiri makin unggul</span>
             </div>
             <div style="position: relative; height: 340px;">
               <canvas id="scatterChart"></canvas>
@@ -740,7 +741,7 @@ generate_benchmark_dashboard <- function(
           <div class="chart-container-box">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <h5 class="fs-6 fw-bold mb-0"><i class="fa-solid fa-bars-staggered text-success me-1"></i> <span data-i18n="chart_bar_title">Perbandingan Efisiensi Relatif (%)</span></h5>
-              <span class="badge bg-light text-dark border small" data-i18n="chart_bar_badge">Baseline Direct = 100%</span>
+              <span class="badge bg-light text-dark border small" data-i18n="chart_bar_badge">Penduga Langsung (Direct) = 100%</span>
             </div>
             <div style="position: relative; height: 340px;">
               <canvas id="barChart"></canvas>
@@ -755,7 +756,7 @@ generate_benchmark_dashboard <- function(
       <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-2">
         <div>
           <h2 class="h4 fw-bold mb-1"><i class="fa-solid fa-table-list text-primary me-2"></i><span data-i18n="table_section_title">Tabel Evaluasi Model per Dataset</span></h2>
-          <p class="text-muted small mb-0" data-i18n="table_section_subtitle">Setiap dataset menguji tantangan terpisah; nilai terbaik per metrik diberi highlight sel hijau.</p>
+          <p class="text-muted small mb-0" data-i18n="table_section_subtitle">Setiap dataset menguji karakteristik struktur khusus; peringkat dipisahkan dan nilai terbaik ditandai hijau lembut.</p>
         </div>
       </div>
 
@@ -775,10 +776,10 @@ generate_benchmark_dashboard <- function(
       <div class="methodology-box">
         <div class="d-flex align-items-center gap-2 mb-3">
           <i class="fa-solid fa-graduation-cap text-primary fs-5"></i>
-          <h3 class="h5 fw-bold mb-0" data-i18n="methodology_title">Metodologi Sampling & Ground Truth</h3>
+          <h3 class="h5 fw-bold mb-0" data-i18n="methodology_title">Metodologi Sampling dan Nilai Populasi (Ground Truth)</h3>
         </div>
         <p class="text-muted small mb-3" data-i18n="methodology_desc">
-          Seluruh benchmark dibangun di atas kerangka kerja <strong>Two-Stage Stratified Cluster Sampling</strong> yang mengadopsi standar Survei Sosial Ekonomi Nasional (Susenas) Badan Pusat Statistik (BPS) Indonesia, dievaluasi terhadap nilai murni <em>Ground Truth</em> populasi sintetis (~120.000 rumah tangga).
+          Seluruh set data tolok ukur dibangkitkan dari populasi sintetis (~120.000 rumah tangga) menggunakan rancangan <strong>Two-Stage Stratified Cluster Sampling</strong> yang mengadopsi standar Survei Sosial Ekonomi Nasional (Susenas) Badan Pusat Statistik (BPS) Indonesia, dievaluasi terhadap nilai murni <em>Ground Truth</em> populasi.
         </p>
 
         <div class="row g-3">
@@ -786,7 +787,7 @@ generate_benchmark_dashboard <- function(
             <div class="p-3 rounded bg-body-tertiary border h-100">
               <h6 class="fw-bold mb-1"><span class="badge bg-primary rounded-circle me-1">1</span> <span data-i18n="stage1_title">Tahap 1: Pemilihan Blok Sensus (PSU)</span></h6>
               <p class="text-muted small mb-2" data-i18n="stage1_desc">
-                Stratifikasi perkotaan/perdesaan di setiap kabupaten. Pemilihan Blok Sensus (BS) dilakukan dengan <em>Probability Proportional to Size (PPS)</em> tanpa pengembalian berdasarkan jumlah rumah tangga.
+                Stratifikasi perkotaan dan perdesaan di setiap kabupaten. Blok Sensus (BS) dipilih secara <em>Probability Proportional to Size (PPS)</em> tanpa pengembalian berdasarkan jumlah rumah tangga muatan.
               </p>
               <div class="font-monospace text-primary small py-1 px-2 bg-body rounded border">
                 &pi;<sub>1,dhi</sub> = a<sub>dh</sub> &times; (M<sub>dhi</sub> / &sum; M<sub>dhk</sub>)
@@ -798,7 +799,7 @@ generate_benchmark_dashboard <- function(
             <div class="p-3 rounded bg-body-tertiary border h-100">
               <h6 class="fw-bold mb-1"><span class="badge bg-info rounded-circle me-1">2</span> <span data-i18n="stage2_title">Tahap 2: Pemilihan Rumah Tangga (SSU)</span></h6>
               <p class="text-muted small mb-2" data-i18n="stage2_desc">
-                Sampling sistematik tepat 10 rumah tangga per BS terpilih dengan awalan acak (<em>random start</em>). Peluang inklusi bersyarat:
+                Penarikan sampel sistematik tepat 10 rumah tangga per BS terpilih dengan nomor acak awal (<em>random start</em>). Peluang inklusi bersyarat:
               </p>
               <div class="font-monospace text-info small py-1 px-2 bg-body rounded border">
                 &pi;<sub>2|1,dhij</sub> = 10 / M<sub>dhi</sub>
@@ -808,9 +809,9 @@ generate_benchmark_dashboard <- function(
 
           <div class="col-md-4">
             <div class="p-3 rounded bg-body-tertiary border h-100">
-              <h6 class="fw-bold mb-1"><span class="badge bg-success rounded-circle me-1">3</span> <span data-i18n="stage3_title">Penimbang & Varians Taylor</span></h6>
+              <h6 class="fw-bold mb-1"><span class="badge bg-success rounded-circle me-1">3</span> <span data-i18n="stage3_title">Tahap 3: Pembobotan dan Varians Taylor</span></h6>
               <p class="text-muted small mb-2" data-i18n="stage3_desc">
-                Bobot kalibrasi FWT memperhitungkan klastering. Varians sampling &psi;<sub>d</sub> dihitung via Taylor Series Linearization (<code>survey::svydesign</code>), menghasilkan efek desain realistis (<em>Deff &gt; 1</em>).
+                Bobot sampel akhir (FWT) memperhitungkan efek pengelompokan (clustering). Varians penduga langsung dihitung melalui Linearitas Deret Taylor (<code>survey::svydesign</code>), menghasilkan efek desain realistis (<em>Deff &gt; 1</em>).
               </p>
               <div class="font-monospace text-success small py-1 px-2 bg-body rounded border">
                 w<sub>dhij</sub> = M<sub>dh</sub> / (10 a<sub>dh</sub>)
@@ -841,53 +842,64 @@ generate_benchmark_dashboard <- function(
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // Bilingual Dictionary
+    // Bilingual Dictionary with EYD V & Natural Statistical Nomenclature
     const translations = {
       id: {
         page_title: "SAE Benchmark Lab | Evaluasi Model Small Area Estimation",
-        hero_subtitle: "Tolok ukur terstandar evaluasi model Small Area Estimation (SAE) terhadap Ground Truth populasi murni dengan metrik akurasi, efisiensi relatif, dan latensi komputasi.",
+        badge_archetypes: "8 Ragam Dataset",
+        badge_ground_truth: "Populasi Murni (Ground Truth)",
+        badge_profiling: "Profil Waktu & Memori",
+        hero_subtitle: "Tolok ukur terstandar untuk mengevaluasi model Small Area Estimation (SAE) terhadap nilai populasi murni (Ground Truth) berdasarkan akurasi, efisiensi relatif, dan efisiensi komputasi.",
         kpi_total_models: "Total Model",
-        kpi_datasets: "Arketipe Data",
-        kpi_top_gain: "Efisiensi Maksimal",
+        kpi_total_models_sub: "Standar & Robust",
+        kpi_datasets: "Ragam Dataset",
+        kpi_datasets_sub: "Tantangan SAE",
+        kpi_top_gain: "Efisiensi Tertinggi",
         kpi_fastest: "Model Tercepat",
-        kpi_lowest_ram: "Hemat Memori",
+        kpi_lowest_ram: "Memori Terendah",
         chart_section_title: "Visualisasi Interaktif Trade-Off Model",
-        chart_section_subtitle: "Eksplorasi hubungan waktu komputasi versus akurasi dan efisiensi relatif model",
+        chart_section_subtitle: "Analisis perbandingan antara kecepatan komputasi, presisi estimasi, dan efisiensi relatif model",
         filter_dataset: "Pilih Dataset:",
         opt_all_datasets: "Semua Dataset",
-        chart_scatter_title: "Runtime vs Efisiensi Relatif (Pareto Frontier)",
-        chart_scatter_badge: "Makin ke atas & kiri makin unggul",
+        chart_scatter_title: "Waktu Komputasi vs Efisiensi Relatif (Pareto Frontier)",
+        chart_scatter_badge: "Makin ke atas dan kiri makin unggul",
         chart_bar_title: "Perbandingan Efisiensi Relatif (%)",
-        chart_bar_badge: "Baseline Direct = 100%",
+        chart_bar_badge: "Penduga Langsung (Direct) = 100%",
         table_section_title: "Tabel Evaluasi Model per Dataset",
-        table_section_subtitle: "Setiap dataset menguji tantangan terpisah; nilai terbaik per metrik diberi highlight sel hijau.",
-        col_model: "Model / Package",
+        table_section_subtitle: "Setiap dataset menguji karakteristik struktur khusus; peringkat dipisahkan dan nilai terbaik ditandai hijau lembut.",
+        col_rank: "Peringkat",
+        col_model: "Model / Paket",
         col_releff: "Efisiensi Relatif (%)",
         col_rrmse: "RRMSE (%)",
         col_arb: "ARB (%)",
         col_corr: "Korelasi",
         col_ram: "RAM Puncak",
-        col_runtime: "Waktu Eksekusi",
-        col_outlier_rrmse: "RRMSE Outlier",
+        col_runtime: "Waktu",
+        col_outlier_rrmse: "RRMSE Pencilan",
         col_violations: "Pelanggaran Batas (&lt;0 / &gt;1)",
-        benchmark_goal: "Fokus Pengujian:",
+        benchmark_goal: "Tujuan Pengujian:",
         dgp_label: "Struktur DGP:",
         best_legend: "Nilai terbaik ditandai hijau",
-        methodology_title: "Metodologi Sampling & Ground Truth",
-        methodology_desc: "Seluruh benchmark dibangun di atas kerangka kerja Two-Stage Stratified Cluster Sampling yang mengadopsi standar Survei Sosial Ekonomi Nasional (Susenas) Badan Pusat Statistik (BPS) Indonesia, dievaluasi terhadap nilai murni Ground Truth populasi sintetis (~120.000 rumah tangga).",
+        methodology_title: "Metodologi Sampling dan Nilai Populasi (Ground Truth)",
+        methodology_desc: "Seluruh set data tolok ukur dibangkitkan dari populasi sintetis (~120.000 rumah tangga) menggunakan rancangan Two-Stage Stratified Cluster Sampling yang mengadopsi standar Survei Sosial Ekonomi Nasional (Susenas) Badan Pusat Statistik (BPS) Indonesia, dievaluasi terhadap nilai murni Ground Truth populasi.",
         stage1_title: "Tahap 1: Pemilihan Blok Sensus (PSU)",
-        stage1_desc: "Stratifikasi perkotaan/perdesaan di setiap kabupaten. Pemilihan Blok Sensus (BS) dilakukan dengan Probability Proportional to Size (PPS) tanpa pengembalian berdasarkan jumlah rumah tangga.",
+        stage1_desc: "Stratifikasi perkotaan dan perdesaan di setiap kabupaten. Blok Sensus (BS) dipilih secara Probability Proportional to Size (PPS) tanpa pengembalian berdasarkan jumlah rumah tangga muatan.",
         stage2_title: "Tahap 2: Pemilihan Rumah Tangga (SSU)",
-        stage2_desc: "Sampling sistematik tepat 10 rumah tangga per BS terpilih dengan awalan acak (random start).",
-        stage3_title: "Tahap 3: Penimbang & Varians Taylor",
-        stage3_desc: "Bobot kalibrasi FWT memperhitungkan klastering. Varians sampling dihitung via Taylor Series Linearization (survey::svydesign), menghasilkan efek desain realistis (Deff > 1).",
+        stage2_desc: "Penarikan sampel sistematik tepat 10 rumah tangga per BS terpilih dengan nomor acak awal (random start).",
+        stage3_title: "Tahap 3: Pembobotan dan Varians Taylor",
+        stage3_desc: "Bobot sampel akhir (FWT) memperhitungkan efek pengelompokan (clustering). Varians penduga langsung dihitung melalui Linearitas Deret Taylor (survey::svydesign) sehingga menghasilkan efek desain yang realistis (Deff > 1).",
         footer_title: "Laboratorium Tolok Ukur Model Small Area Estimation"
       },
       en: {
         page_title: "SAE Benchmark Lab | Small Area Estimation Benchmark",
+        badge_archetypes: "8 Dataset Archetypes",
+        badge_ground_truth: "Exact Ground Truth",
+        badge_profiling: "Time & Memory Profiling",
         hero_subtitle: "A standardized testbed evaluating Small Area Estimation (SAE) models against exact finite population Ground Truth with accuracy, relative efficiency, and computational latency metrics.",
         kpi_total_models: "Total Models",
+        kpi_total_models_sub: "Standard & Robust",
         kpi_datasets: "Data Archetypes",
+        kpi_datasets_sub: "SAE Challenges",
         kpi_top_gain: "Top RelEff Gain",
         kpi_fastest: "Fastest Model",
         kpi_lowest_ram: "Lowest Memory",
@@ -900,7 +912,8 @@ generate_benchmark_dashboard <- function(
         chart_bar_title: "Relative Efficiency (%) Comparison",
         chart_bar_badge: "Direct Estimator Baseline = 100%",
         table_section_title: "Model Leaderboard by Dataset",
-        table_section_subtitle: "Each dataset tests distinct structural challenges; top metric performers highlighted in soft green.",
+        table_section_subtitle: "Each dataset tests distinct structural challenges; rank is separated and top metric performers are highlighted in soft green.",
+        col_rank: "Rank",
         col_model: "Model / Package",
         col_releff: "Rel. Efficiency (%)",
         col_rrmse: "RRMSE (%)",
@@ -1020,7 +1033,7 @@ generate_benchmark_dashboard <- function(
               type: "logarithmic",
               title: {
                 display: true,
-                text: currentLang === "id" ? "Waktu Eksekusi (detik, log scale)" : "Runtime (seconds, log scale)",
+                text: currentLang === "id" ? "Waktu Komputasi (detik, skala log)" : "Runtime (seconds, log scale)",
                 color: tc.textColor
               },
               grid: { color: tc.gridColor },
@@ -1142,7 +1155,7 @@ generate_benchmark_dashboard <- function(
       }));
 
       scatterChart.data.datasets = scatterDatasets;
-      scatterChart.options.scales.x.title.text = currentLang === "id" ? "Waktu Eksekusi (detik, log scale)" : "Runtime (seconds, log scale)";
+      scatterChart.options.scales.x.title.text = currentLang === "id" ? "Waktu Komputasi (detik, skala log)" : "Runtime (seconds, log scale)";
       scatterChart.options.scales.y.title.text = currentLang === "id" ? "Efisiensi Relatif (%)" : "Relative Efficiency (%)";
       scatterChart.update();
 
