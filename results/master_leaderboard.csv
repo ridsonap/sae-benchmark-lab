@@ -1,41 +1,59 @@
-"dataset_id","dataset_name","model","N","N_valid","ARB_pct","RRMSE_pct","RMSE","MAE","Corr","RelEff_pct","Regular_RRMSE","Outlier_RRMSE","Boundary_Violations","Peak_RAM_MB","Runtime_sec"
-"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","Direct",60,60,0.32,0.41,0.057,0.0449,0.9897,100,NA,NA,0,0,0
-"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","fastsaegpu_HB",60,60,0.31,0.38,0.0541,0.043,0.9906,110.9,NA,NA,0,160,14.04
-"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","Enhanced_MERF",60,60,0.32,0.4,0.0564,0.0448,0.9898,101.9,NA,NA,0,44.6,0.36
-"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","fastsae_EBLUP",60,60,0.31,0.38,0.054,0.043,0.9906,111.3,NA,NA,0,2,0.02
-"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","fastsae_INLA",60,60,0.31,0.38,0.054,0.043,0.9906,111.3,NA,NA,0,136.8,1.92
-"ds02_bounded_rate","Bounded Rate (Poverty / Prevalence Rate)","Direct",60,60,24.67,36.16,0.0353,0.0269,0.9192,100,NA,NA,0,0.5,0
-"ds02_bounded_rate","Bounded Rate (Poverty / Prevalence Rate)","fastsaegpu_HB",60,60,20.63,29.15,0.0326,0.0237,0.9126,117.5,NA,NA,0,39.2,6.41
-"ds02_bounded_rate","Bounded Rate (Poverty / Prevalence Rate)","Enhanced_MERF",60,60,23.62,34.91,0.0323,0.0255,0.9173,119.6,NA,NA,0,41,0.32
-"ds02_bounded_rate","Bounded Rate (Poverty / Prevalence Rate)","fastsae_EBLUP",60,60,20.71,29.15,0.0325,0.0237,0.913,118.1,NA,NA,0,3.6,0
-"ds02_bounded_rate","Bounded Rate (Poverty / Prevalence Rate)","fastsae_INLA",60,60,20.7,29.2,0.0323,0.0236,0.9139,119.3,NA,NA,0,51,1.22
-"ds03_highdim_sparse","High-Dimensional Sparse (Podes / Satellite Features)","Direct",60,60,0.46,0.56,0.0562,0.0462,0.9982,100,NA,NA,0,0,0
-"ds03_highdim_sparse","High-Dimensional Sparse (Podes / Satellite Features)","fastsaegpu_HB",60,60,0.43,0.53,0.0534,0.044,0.9984,110.6,NA,NA,0,29.2,9.52
-"ds03_highdim_sparse","High-Dimensional Sparse (Podes / Satellite Features)","Enhanced_MERF",60,60,0.46,0.56,0.0562,0.0464,0.9982,99.7,NA,NA,0,21.9,0.23
-"ds03_highdim_sparse","High-Dimensional Sparse (Podes / Satellite Features)","fastsae_EBLUP",60,60,0.43,0.53,0.0533,0.0437,0.9984,111.1,NA,NA,0,1,0
-"ds03_highdim_sparse","High-Dimensional Sparse (Podes / Satellite Features)","fastsae_INLA",60,60,0.43,0.53,0.0533,0.0437,0.9984,111.1,NA,NA,0,60.5,1.28
-"ds04_nonlinear_interaction","Nonlinear & Interactions (MERF / Tree Territory)","Direct",60,60,0.45,0.57,0.0577,0.0445,0.9992,100,NA,NA,0,0,0
-"ds04_nonlinear_interaction","Nonlinear & Interactions (MERF / Tree Territory)","fastsaegpu_HB",60,60,0.45,0.58,0.058,0.0447,0.9992,98.8,NA,NA,0,28.7,18.88
-"ds04_nonlinear_interaction","Nonlinear & Interactions (MERF / Tree Territory)","Enhanced_MERF",60,60,0.44,0.57,0.0573,0.0441,0.9992,101.2,NA,NA,0,38.4,0.38
-"ds04_nonlinear_interaction","Nonlinear & Interactions (MERF / Tree Territory)","fastsae_EBLUP",60,60,0.45,0.58,0.0579,0.0446,0.9992,99.3,NA,NA,0,0.4,0
-"ds04_nonlinear_interaction","Nonlinear & Interactions (MERF / Tree Territory)","fastsae_INLA",60,60,0.45,0.58,0.0579,0.0446,0.9992,99.2,NA,NA,0,48,1.33
-"ds05_spatial_correlated","Spatial Correlated (SAR / CAR Topology)","Direct",60,60,0.38,0.47,0.0547,0.0441,0.994,100,NA,NA,0,0,0
-"ds05_spatial_correlated","Spatial Correlated (SAR / CAR Topology)","fastsaegpu_HB",60,60,0.34,0.42,0.0493,0.0403,0.9951,123.4,NA,NA,0,28.7,6.25
-"ds05_spatial_correlated","Spatial Correlated (SAR / CAR Topology)","Enhanced_MERF",60,60,0.38,0.47,0.0545,0.044,0.994,100.8,NA,NA,0,36.7,0.31
-"ds05_spatial_correlated","Spatial Correlated (SAR / CAR Topology)","fastsae_EBLUP",60,60,0.34,0.42,0.0495,0.0404,0.9951,122.4,NA,NA,0,0.4,0
-"ds05_spatial_correlated","Spatial Correlated (SAR / CAR Topology)","fastsae_INLA",60,60,0.34,0.42,0.0495,0.0404,0.9951,122.4,NA,NA,0,46.9,1.26
-"ds06_spatiotemporal_panel","Spatio-Temporal Panel (D=50 x T=5)","Direct",250,250,0.39,0.5,0.0621,0.0481,0.9908,100,NA,NA,0,0,0
-"ds06_spatiotemporal_panel","Spatio-Temporal Panel (D=50 x T=5)","fastsaegpu_HB",250,250,0.37,0.47,0.059,0.046,0.9914,111,NA,NA,0,28.7,20.26
-"ds06_spatiotemporal_panel","Spatio-Temporal Panel (D=50 x T=5)","Enhanced_MERF",250,250,0.38,0.49,0.0609,0.0468,0.9909,103.9,NA,NA,0,52.1,1.17
-"ds06_spatiotemporal_panel","Spatio-Temporal Panel (D=50 x T=5)","fastsae_EBLUP",250,250,0.37,0.47,0.0591,0.0461,0.9914,110.6,NA,NA,0,0.4,0
-"ds06_spatiotemporal_panel","Spatio-Temporal Panel (D=50 x T=5)","fastsae_INLA",250,250,0.37,0.47,0.0591,0.0461,0.9914,110.6,NA,NA,0,51.5,1.31
-"ds07_extreme_outliers","Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)","Direct",60,60,0.47,0.59,0.062,0.0491,0.9943,100,0.6,0.36,0,0.1,0
-"ds07_extreme_outliers","Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)","fastsaegpu_HB",60,60,0.46,0.58,0.0611,0.0489,0.9943,103,0.6,0.27,0,28.6,9.93
-"ds07_extreme_outliers","Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)","Enhanced_MERF",60,60,0.46,0.58,0.0611,0.0484,0.9944,102.9,0.6,0.3,0,36.8,0.32
-"ds07_extreme_outliers","Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)","fastsae_EBLUP",60,60,0.46,0.58,0.061,0.0488,0.9943,103.1,0.6,0.28,0,0.3,0
-"ds07_extreme_outliers","Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)","fastsae_INLA",60,60,0.46,0.58,0.061,0.0488,0.9943,103.2,0.6,0.28,0,46.8,1.2
-"ds08_nested_subarea","Nested Subarea (Two-Fold Hierarchy: Province -> District)","Direct",60,60,0.36,0.46,0.0522,0.0405,0.9934,100,NA,NA,0,0,0
-"ds08_nested_subarea","Nested Subarea (Two-Fold Hierarchy: Province -> District)","fastsaegpu_HB",60,60,0.36,0.46,0.0519,0.0407,0.9933,101.3,NA,NA,0,28.5,6.39
-"ds08_nested_subarea","Nested Subarea (Two-Fold Hierarchy: Province -> District)","Enhanced_MERF",60,60,0.36,0.46,0.0517,0.0403,0.9934,101.7,NA,NA,0,36.8,0.31
-"ds08_nested_subarea","Nested Subarea (Two-Fold Hierarchy: Province -> District)","fastsae_EBLUP",60,60,0.36,0.45,0.0517,0.0405,0.9934,102.1,NA,NA,0,0.3,0
-"ds08_nested_subarea","Nested Subarea (Two-Fold Hierarchy: Province -> District)","fastsae_INLA",60,60,0.36,0.46,0.0517,0.0405,0.9934,102,NA,NA,0,46.7,1.25
+"dataset_id","dataset_name","model","N","N_valid","ARB_pct","RRMSE_pct","RMSE","MAE","Corr","RelEff_pct","Regular_RRMSE","Outlier_RRMSE","Boundary_Violations","Peak_RAM_MB","Runtime_sec","dataset_code","dataset_name_en","dataset_name_id"
+"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","fastsae (eblup_fh, REML)",60,60,0.31,0.38,0.054,0.043,0.9906,111.3,NA,NA,0,2,0.02,"ds01-linear","Linear Baseline","Linier Baseline"
+"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","fastsae (hb_area, INLA)",60,60,0.31,0.38,0.054,0.043,0.9906,111.3,NA,NA,0,136.8,1.92,"ds01-linear","Linear Baseline","Linier Baseline"
+"ds01_continuous_linear","Linear Baseline","hbsae (fSAE.Area, Hierarchical Bayes)",60,60,0.31,0.38,0.054,0.043,0.9906,111.3,NA,NA,0,8.5,0.12,"ds01-linear","Linear Baseline","Linier Baseline"
+"ds01_continuous_linear","Linear Baseline","sae (eblupFH, REML)",60,60,0.31,0.38,0.054,0.043,0.9906,111.3,NA,NA,0,3.2,0,"ds01-linear","Linear Baseline","Linier Baseline"
+"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","fastsaegpu (hb_area, GPU-MCMC)",60,60,0.31,0.38,0.0541,0.043,0.9906,110.9,NA,NA,0,160,14.04,"ds01-linear","Linear Baseline","Linier Baseline"
+"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","fastsaegpu (merf_area, ML-Random Forest)",60,60,0.32,0.4,0.0564,0.0448,0.9898,101.9,NA,NA,0,44.6,0.36,"ds01-linear","Linear Baseline","Linier Baseline"
+"ds01_continuous_linear","Continuous Linear (Baseline Fay-Herriot)","survey (direct, Taylor)",60,60,0.32,0.41,0.057,0.0449,0.9897,100,NA,NA,0,0,0,"ds01-linear","Linear Baseline","Linier Baseline"
+"ds02_bounded_rate","Bounded Rate (0,1)","tipsae (fit_sae, Beta Stan HMC)",60,60,18.25,23.46,0.0282,0.0224,0.9388,156.6,NA,NA,0,185,1.42,"ds02-rate","Bounded Rate (0,1)","Tingkat Bounded (0,1)"
+"ds02_bounded_rate","Bounded Rate (0,1)","hbsae (fSAE.Area, Hierarchical Bayes)",60,60,20.8,29.33,0.0322,0.0237,0.9148,120.5,NA,NA,0,8.5,0.04,"ds02-rate","Bounded Rate (0,1)","Tingkat Bounded (0,1)"
+"ds02_bounded_rate","Bounded Rate (Poverty / Prevalence Rate)","fastsaegpu (merf_area, ML-Random Forest)",60,60,23.62,34.91,0.0323,0.0255,0.9173,119.6,NA,NA,0,41,0.32,"ds02-rate","Bounded Rate (0,1)","Tingkat Bounded (0,1)"
+"ds02_bounded_rate","Bounded Rate (Poverty / Prevalence Rate)","fastsae (hb_area, INLA)",60,60,20.7,29.2,0.0323,0.0236,0.9139,119.3,NA,NA,0,51,1.22,"ds02-rate","Bounded Rate (0,1)","Tingkat Bounded (0,1)"
+"ds02_bounded_rate","Bounded Rate (Poverty / Prevalence Rate)","fastsae (eblup_fh, REML)",60,60,20.71,29.15,0.0325,0.0237,0.913,118.1,NA,NA,0,3.6,0,"ds02-rate","Bounded Rate (0,1)","Tingkat Bounded (0,1)"
+"ds02_bounded_rate","Bounded Rate (Poverty / Prevalence Rate)","fastsaegpu (hb_area, GPU-MCMC)",60,60,20.63,29.15,0.0326,0.0237,0.9126,117.5,NA,NA,0,39.2,6.41,"ds02-rate","Bounded Rate (0,1)","Tingkat Bounded (0,1)"
+"ds02_bounded_rate","Bounded Rate (Poverty / Prevalence Rate)","survey (direct, Taylor)",60,60,24.67,36.16,0.0353,0.0269,0.9192,100,NA,NA,0,0.5,0,"ds02-rate","Bounded Rate (0,1)","Tingkat Bounded (0,1)"
+"ds03_highdim_sparse","High-Dimensional Sparse (Podes / Satellite Features)","fastsae (eblup_fh, REML)",60,60,0.43,0.53,0.0533,0.0437,0.9984,111.1,NA,NA,0,1,0,"ds03-sparse","High-Dim Sparse","Dimensi Tinggi (Sparse)"
+"ds03_highdim_sparse","High-Dimensional Sparse (Podes / Satellite Features)","fastsae (hb_area, INLA)",60,60,0.43,0.53,0.0533,0.0437,0.9984,111.1,NA,NA,0,60.5,1.28,"ds03-sparse","High-Dim Sparse","Dimensi Tinggi (Sparse)"
+"ds03_highdim_sparse","High-Dim Sparse","sae (eblupFH, REML)",60,60,0.43,0.53,0.0533,0.0437,0.9984,111.1,NA,NA,0,3.2,0,"ds03-sparse","High-Dim Sparse","Dimensi Tinggi (Sparse)"
+"ds03_highdim_sparse","High-Dim Sparse","hbsae (fSAE.Area, Hierarchical Bayes)",60,60,0.43,0.53,0.0533,0.0437,0.9984,111,NA,NA,0,8.5,0.06,"ds03-sparse","High-Dim Sparse","Dimensi Tinggi (Sparse)"
+"ds03_highdim_sparse","High-Dimensional Sparse (Podes / Satellite Features)","fastsaegpu (hb_area, GPU-MCMC)",60,60,0.43,0.53,0.0534,0.044,0.9984,110.6,NA,NA,0,29.2,9.52,"ds03-sparse","High-Dim Sparse","Dimensi Tinggi (Sparse)"
+"ds03_highdim_sparse","High-Dimensional Sparse (Podes / Satellite Features)","survey (direct, Taylor)",60,60,0.46,0.56,0.0562,0.0462,0.9982,100,NA,NA,0,0,0,"ds03-sparse","High-Dim Sparse","Dimensi Tinggi (Sparse)"
+"ds03_highdim_sparse","High-Dimensional Sparse (Podes / Satellite Features)","fastsaegpu (merf_area, ML-Random Forest)",60,60,0.46,0.56,0.0562,0.0464,0.9982,99.7,NA,NA,0,21.9,0.23,"ds03-sparse","High-Dim Sparse","Dimensi Tinggi (Sparse)"
+"ds04_nonlinear_interaction","Nonlinear & Interactions (MERF / Tree Territory)","fastsaegpu (merf_area, ML-Random Forest)",60,60,0.44,0.57,0.0573,0.0441,0.9992,101.2,NA,NA,0,38.4,0.38,"ds04-nonlinear","Nonlinear Complex","Nonlinier Kompleks"
+"ds04_nonlinear_interaction","Nonlinear & Interactions (MERF / Tree Territory)","survey (direct, Taylor)",60,60,0.45,0.57,0.0577,0.0445,0.9992,100,NA,NA,0,0,0,"ds04-nonlinear","Nonlinear Complex","Nonlinier Kompleks"
+"ds04_nonlinear_interaction","Nonlinear & Interactions (MERF / Tree Territory)","fastsae (eblup_fh, REML)",60,60,0.45,0.58,0.0579,0.0446,0.9992,99.3,NA,NA,0,0.4,0,"ds04-nonlinear","Nonlinear Complex","Nonlinier Kompleks"
+"ds04_nonlinear_interaction","Nonlinear Complex","hbsae (fSAE.Area, Hierarchical Bayes)",60,60,0.45,0.58,0.0579,0.0446,0.9992,99.3,NA,NA,0,8.5,0.02,"ds04-nonlinear","Nonlinear Complex","Nonlinier Kompleks"
+"ds04_nonlinear_interaction","Nonlinear Complex","sae (eblupFH, REML)",60,60,0.45,0.58,0.0579,0.0446,0.9992,99.3,NA,NA,0,3.2,0,"ds04-nonlinear","Nonlinear Complex","Nonlinier Kompleks"
+"ds04_nonlinear_interaction","Nonlinear & Interactions (MERF / Tree Territory)","fastsae (hb_area, INLA)",60,60,0.45,0.58,0.0579,0.0446,0.9992,99.2,NA,NA,0,48,1.33,"ds04-nonlinear","Nonlinear Complex","Nonlinier Kompleks"
+"ds04_nonlinear_interaction","Nonlinear & Interactions (MERF / Tree Territory)","fastsaegpu (hb_area, GPU-MCMC)",60,60,0.45,0.58,0.058,0.0447,0.9992,98.8,NA,NA,0,28.7,18.88,"ds04-nonlinear","Nonlinear Complex","Nonlinier Kompleks"
+"ds05_spatial_correlated","Spatial SAR","sae (eblupSFH, Spatial SAR)",60,60,0.34,0.42,0.0487,0.0398,0.9953,126.4,NA,NA,0,12,0.03,"ds05-spatial","Spatial SAR","Spasial SAR"
+"ds05_spatial_correlated","Spatial Correlated (SAR / CAR Topology)","fastsaegpu (hb_area, GPU-MCMC)",60,60,0.34,0.42,0.0493,0.0403,0.9951,123.4,NA,NA,0,28.7,6.25,"ds05-spatial","Spatial SAR","Spasial SAR"
+"ds05_spatial_correlated","Spatial Correlated (SAR / CAR Topology)","fastsae (eblup_fh, REML)",60,60,0.34,0.42,0.0495,0.0404,0.9951,122.4,NA,NA,0,0.4,0,"ds05-spatial","Spatial SAR","Spasial SAR"
+"ds05_spatial_correlated","Spatial Correlated (SAR / CAR Topology)","fastsae (hb_area, INLA)",60,60,0.34,0.42,0.0495,0.0404,0.9951,122.4,NA,NA,0,46.9,1.26,"ds05-spatial","Spatial SAR","Spasial SAR"
+"ds05_spatial_correlated","Spatial SAR","sae (eblupFH, REML)",60,60,0.34,0.42,0.0495,0.0404,0.9951,122.4,NA,NA,0,3.2,0,"ds05-spatial","Spatial SAR","Spasial SAR"
+"ds05_spatial_correlated","Spatial SAR","hbsae (fSAE.Area, Hierarchical Bayes)",60,60,0.34,0.42,0.0495,0.0404,0.9951,122.1,NA,NA,0,8.5,0.03,"ds05-spatial","Spatial SAR","Spasial SAR"
+"ds05_spatial_correlated","Spatial Correlated (SAR / CAR Topology)","fastsaegpu (merf_area, ML-Random Forest)",60,60,0.38,0.47,0.0545,0.044,0.994,100.8,NA,NA,0,36.7,0.31,"ds05-spatial","Spatial SAR","Spasial SAR"
+"ds05_spatial_correlated","Spatial Correlated (SAR / CAR Topology)","survey (direct, Taylor)",60,60,0.38,0.47,0.0547,0.0441,0.994,100,NA,NA,0,0,0,"ds05-spatial","Spatial SAR","Spasial SAR"
+"ds06_spatiotemporal_panel","Spatio-Temporal Panel (D=50 x T=5)","fastsaegpu (hb_area, GPU-MCMC)",250,250,0.37,0.47,0.059,0.046,0.9914,111,NA,NA,0,28.7,20.26,"ds06-panel","Panel Spatio-Temporal","Panel Spasio-Temporal"
+"ds06_spatiotemporal_panel","Spatio-Temporal Panel (D=50 x T=5)","fastsae (eblup_fh, REML)",250,250,0.37,0.47,0.0591,0.0461,0.9914,110.6,NA,NA,0,0.4,0,"ds06-panel","Panel Spatio-Temporal","Panel Spasio-Temporal"
+"ds06_spatiotemporal_panel","Spatio-Temporal Panel (D=50 x T=5)","fastsae (hb_area, INLA)",250,250,0.37,0.47,0.0591,0.0461,0.9914,110.6,NA,NA,0,51.5,1.31,"ds06-panel","Panel Spatio-Temporal","Panel Spasio-Temporal"
+"ds06_spatiotemporal_panel","Panel Spatio-Temporal","hbsae (fSAE.Area, Hierarchical Bayes)",250,250,0.37,0.47,0.059,0.0461,0.9914,110.6,NA,NA,0,8.5,0.07,"ds06-panel","Panel Spatio-Temporal","Panel Spasio-Temporal"
+"ds06_spatiotemporal_panel","Panel Spatio-Temporal","sae (eblupFH, REML)",250,250,0.37,0.47,0.0591,0.0461,0.9914,110.6,NA,NA,0,3.2,0.04,"ds06-panel","Panel Spatio-Temporal","Panel Spasio-Temporal"
+"ds06_spatiotemporal_panel","Spatio-Temporal Panel (D=50 x T=5)","fastsaegpu (merf_area, ML-Random Forest)",250,250,0.38,0.49,0.0609,0.0468,0.9909,103.9,NA,NA,0,52.1,1.17,"ds06-panel","Panel Spatio-Temporal","Panel Spasio-Temporal"
+"ds06_spatiotemporal_panel","Spatio-Temporal Panel (D=50 x T=5)","survey (direct, Taylor)",250,250,0.39,0.5,0.0621,0.0481,0.9908,100,NA,NA,0,0,0,"ds06-panel","Panel Spatio-Temporal","Panel Spasio-Temporal"
+"ds07_extreme_outliers","Extreme Outliers","saeRobust (rfh, Robust Huber)",60,60,0.46,0.57,0.0597,0.0484,0.9945,107.7,0.58,0.27,0,18,0.13,"ds07-outliers","Extreme Outliers","Outlier Ekstrem"
+"ds07_extreme_outliers","Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)","fastsae (hb_area, INLA)",60,60,0.46,0.58,0.061,0.0488,0.9943,103.2,0.6,0.28,0,46.8,1.2,"ds07-outliers","Extreme Outliers","Outlier Ekstrem"
+"ds07_extreme_outliers","Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)","fastsae (eblup_fh, REML)",60,60,0.46,0.58,0.061,0.0488,0.9943,103.1,0.6,0.28,0,0.3,0,"ds07-outliers","Extreme Outliers","Outlier Ekstrem"
+"ds07_extreme_outliers","Extreme Outliers","hbsae (fSAE.Area, Hierarchical Bayes)",60,60,0.46,0.58,0.061,0.0488,0.9943,103.1,0.6,0.27,0,8.5,0.02,"ds07-outliers","Extreme Outliers","Outlier Ekstrem"
+"ds07_extreme_outliers","Extreme Outliers","sae (eblupFH, REML)",60,60,0.46,0.58,0.061,0.0488,0.9943,103.1,0.6,0.28,0,3.2,0,"ds07-outliers","Extreme Outliers","Outlier Ekstrem"
+"ds07_extreme_outliers","Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)","fastsaegpu (hb_area, GPU-MCMC)",60,60,0.46,0.58,0.0611,0.0489,0.9943,103,0.6,0.27,0,28.6,9.93,"ds07-outliers","Extreme Outliers","Outlier Ekstrem"
+"ds07_extreme_outliers","Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)","fastsaegpu (merf_area, ML-Random Forest)",60,60,0.46,0.58,0.0611,0.0484,0.9944,102.9,0.6,0.3,0,36.8,0.32,"ds07-outliers","Extreme Outliers","Outlier Ekstrem"
+"ds07_extreme_outliers","Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)","survey (direct, Taylor)",60,60,0.47,0.59,0.062,0.0491,0.9943,100,0.6,0.36,0,0.1,0,"ds07-outliers","Extreme Outliers","Outlier Ekstrem"
+"ds08_nested_subarea","Nested Hierarchy","hbsae (fSAE.Area, Hierarchical Bayes)",60,60,0.36,0.45,0.0516,0.0404,0.9934,102.3,NA,NA,0,8.5,0.03,"ds08-nested","Nested Hierarchy","Hierarki Bersarang"
+"ds08_nested_subarea","Nested Subarea (Two-Fold Hierarchy: Province -> District)","fastsae (eblup_fh, REML)",60,60,0.36,0.45,0.0517,0.0405,0.9934,102.1,NA,NA,0,0.3,0,"ds08-nested","Nested Hierarchy","Hierarki Bersarang"
+"ds08_nested_subarea","Nested Hierarchy","sae (eblupFH, REML)",60,60,0.36,0.45,0.0517,0.0405,0.9934,102.1,NA,NA,0,3.2,0,"ds08-nested","Nested Hierarchy","Hierarki Bersarang"
+"ds08_nested_subarea","Nested Subarea (Two-Fold Hierarchy: Province -> District)","fastsae (hb_area, INLA)",60,60,0.36,0.46,0.0517,0.0405,0.9934,102,NA,NA,0,46.7,1.25,"ds08-nested","Nested Hierarchy","Hierarki Bersarang"
+"ds08_nested_subarea","Nested Subarea (Two-Fold Hierarchy: Province -> District)","fastsaegpu (merf_area, ML-Random Forest)",60,60,0.36,0.46,0.0517,0.0403,0.9934,101.7,NA,NA,0,36.8,0.31,"ds08-nested","Nested Hierarchy","Hierarki Bersarang"
+"ds08_nested_subarea","Nested Subarea (Two-Fold Hierarchy: Province -> District)","fastsaegpu (hb_area, GPU-MCMC)",60,60,0.36,0.46,0.0519,0.0407,0.9933,101.3,NA,NA,0,28.5,6.39,"ds08-nested","Nested Hierarchy","Hierarki Bersarang"
+"ds08_nested_subarea","Nested Subarea (Two-Fold Hierarchy: Province -> District)","survey (direct, Taylor)",60,60,0.36,0.46,0.0522,0.0405,0.9934,100,NA,NA,0,0,0,"ds08-nested","Nested Hierarchy","Hierarki Bersarang"

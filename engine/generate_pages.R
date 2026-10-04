@@ -1,15 +1,17 @@
 #!/usr/bin/env Rscript
-#' SAE Benchmark Lab - GitHub Pages HTML Generator
-#'
-#' Generates an interactive, responsive leaderboard dashboard at:
-#' - docs/index.html (for GitHub Pages hosting)
-#' - index.html (at repository root)
-#'
-#' @author Antigravity Pair Programmer
-#' @date 2026-10-04
+#' SAE Benchmark Lab - Responsive HTML Generator
+#' Features:
+#' - Minimalist light theme by default with dark mode toggle
+#' - Clean hero title without shouting BPS testbed (moved to methodology section)
+#' - Separate tables per dataset archetype with clean short names
+#' - Standardized model names: nama package (fungsi, fitur/spesifikasi)
+#' - Highlighted best value cells in each metric column
+#' - Interactive Chart.js charts (Runtime vs Efficiency, Efficiency bars) with dataset filter
+#' - Bilingual switch (Bahasa Indonesia & English) via navbar button
 
 suppressPackageStartupMessages({
   library(dplyr)
+  library(jsonlite)
 })
 
 generate_benchmark_dashboard <- function(
@@ -23,351 +25,620 @@ generate_benchmark_dashboard <- function(
   
   df <- read.csv(leaderboard_path, stringsAsFactors = FALSE)
   
-  # Ensure docs and docs/plots directories exist
+  if (!dir.exists(docs_dir)) dir.create(docs_dir, recursive = TRUE)
   docs_plots_dir <- file.path(docs_dir, "plots")
   if (!dir.exists(docs_plots_dir)) dir.create(docs_plots_dir, recursive = TRUE)
   
-  # Copy visualization plots to docs/plots
+  # Copy static plot assets if they exist
   res_plots_dir <- file.path(root_dir, "results", "plots")
-  rrmse_src <- file.path(res_plots_dir, "leaderboard_rrmse_comparison.png")
-  eff_src <- file.path(res_plots_dir, "leaderboard_relative_efficiency.png")
-  
-  if (file.exists(rrmse_src)) {
-    file.copy(rrmse_src, file.path(docs_plots_dir, "leaderboard_rrmse_comparison.png"), overwrite = TRUE)
-  }
-  if (file.exists(eff_src)) {
-    file.copy(eff_src, file.path(docs_plots_dir, "leaderboard_relative_efficiency.png"), overwrite = TRUE)
+  for (pname in c("leaderboard_rrmse_comparison.png", "leaderboard_relative_efficiency.png")) {
+    psrc <- file.path(res_plots_dir, pname)
+    if (file.exists(psrc)) {
+      file.copy(psrc, file.path(docs_plots_dir, pname), overwrite = TRUE)
+    }
   }
   
-  # Compute Summary KPIs
+  # Summary KPIs
   total_models <- length(unique(df$model))
   total_datasets <- length(unique(df$dataset_id))
   
-  # Non-direct models for comparative KPIs
-  non_direct <- df[df$model != "Direct" & !is.na(df$RelEff_pct), ]
-  
-  # Top Relative Efficiency
+  non_direct <- df[!grepl("direct", df$model, ignore.case = TRUE) & !is.na(df$RelEff_pct), ]
   if (nrow(non_direct) > 0) {
     top_eff_idx <- which.max(non_direct$RelEff_pct)
     top_eff_val <- sprintf("%.1f%%", non_direct$RelEff_pct[top_eff_idx])
-    top_eff_detail <- sprintf("%s on %s", non_direct$model[top_eff_idx], non_direct$dataset_id[top_eff_idx])
+    top_eff_model <- non_direct$model[top_eff_idx]
+    top_eff_ds <- non_direct$dataset_name_id[top_eff_idx]
   } else {
     top_eff_val <- "100.0%"
-    top_eff_detail <- "N/A"
+    top_eff_model <- "N/A"
+    top_eff_ds <- "N/A"
   }
   
-  # Fastest Model (excluding Direct)
+  # Fastest non-direct model
   model_runtimes <- non_direct %>%
     group_by(model) %>%
-    summarise(mean_runtime = mean(Runtime_sec, na.rm = TRUE), .groups = "drop") %>%
-    arrange(mean_runtime)
+    summarise(mean_time = mean(Runtime_sec, na.rm = TRUE), .groups = "drop") %>%
+    arrange(mean_time)
+  fastest_model_name <- if (nrow(model_runtimes) > 0) model_runtimes$model[1] else "N/A"
+  fastest_model_time <- if (nrow(model_runtimes) > 0) sprintf("%.2fs avg", model_runtimes$mean_time[1]) else "N/A"
   
-  if (nrow(model_runtimes) > 0) {
-    fastest_model_name <- model_runtimes$model[1]
-    fastest_model_time <- sprintf("%.2fs avg", model_runtimes$mean_runtime[1])
-  } else {
-    fastest_model_name <- "N/A"
-    fastest_model_time <- "N/A"
-  }
+  # Lowest non-direct RAM
+  model_ram <- non_direct %>%
+    filter(!is.na(Peak_RAM_MB)) %>%
+    group_by(model) %>%
+    summarise(mean_ram = mean(Peak_RAM_MB, na.rm = TRUE), .groups = "drop") %>%
+    arrange(mean_ram)
+  lowest_ram_model <- if (nrow(model_ram) > 0) model_ram$model[1] else "N/A"
+  lowest_ram_val <- if (nrow(model_ram) > 0) sprintf("%.1f MB avg", model_ram$mean_ram[1]) else "N/A"
   
-  # Lowest Peak RAM (excluding Direct)
-  if ("Peak_RAM_MB" %in% names(df) && any(!is.na(non_direct$Peak_RAM_MB))) {
-    model_ram <- non_direct %>%
-      filter(!is.na(Peak_RAM_MB)) %>%
-      group_by(model) %>%
-      summarise(mean_ram = mean(Peak_RAM_MB, na.rm = TRUE), .groups = "drop") %>%
-      arrange(mean_ram)
-    
-    if (nrow(model_ram) > 0) {
-      lowest_ram_model <- model_ram$model[1]
-      lowest_ram_val <- sprintf("%.1f MB avg", model_ram$mean_ram[1])
-    } else {
-      lowest_ram_model <- "N/A"
-      lowest_ram_val <- "N/A"
-    }
-  } else {
-    lowest_ram_model <- "N/A"
-    lowest_ram_val <- "N/A"
-  }
-  
-  # Dataset archetype dictionary
+  # Dataset archetype dictionary with bilingual metadata
   dataset_meta <- list(
     "ds01_continuous_linear" = list(
-      name = "Continuous Linear (Baseline Fay-Herriot)",
-      badge = "Baseline",
-      desc = "Synthetic log per-capita household expenditure with 3 continuous auxiliary covariates and homoskedastic normal district shocks.",
-      challenge = "Evaluates standard EBLUP / Hierarchical Bayes shrinkage efficiency gain over baseline direct estimates."
+      code = "ds01-linear",
+      name_en = "Linear Baseline",
+      name_id = "Linier Baseline",
+      badge_en = "Continuous Linear",
+      badge_id = "Linier Kontinu",
+      dgp_en = "Log per-capita household expenditure, 3 linear covariates, normal random effects.",
+      dgp_id = "Log pengeluaran per kapita rumah tangga, 3 kovariat linier, efek acak normal.",
+      challenge_en = "Baseline shrinkage efficiency gain of EBLUP and Hierarchical Bayes over Direct.",
+      challenge_id = "Efisiensi awal penyusutan EBLUP dan Hierarchical Bayes terhadap Direct."
     ),
     "ds02_bounded_rate" = list(
-      name = "Bounded Rate (Poverty / Prevalence)",
-      badge = "Bounded (0, 1)",
-      desc = "Binary household poverty indicators aggregated to district prevalence rates strictly within the unit interval (0, 1).",
-      challenge = "Tests logit/arcsin/Beta links vs unconstrained linear models that risk producing negative rates or probabilities > 100%."
+      code = "ds02-rate",
+      name_en = "Bounded Rate (0,1)",
+      name_id = "Tingkat Bounded (0,1)",
+      badge_en = "Unit Interval (0, 1)",
+      badge_id = "Interval Unit (0, 1)",
+      dgp_en = "Household poverty indicators aggregated to district rates strictly bounded in (0, 1).",
+      dgp_id = "Indikator kemiskinan rumah tangga diagregasi ke tingkat kabupaten dalam rentang (0, 1).",
+      challenge_en = "Evaluates Beta Stan HMC and logit links; prevents rates < 0 or > 100%.",
+      challenge_id = "Menguji Beta Stan HMC dan transformasi logit; mencegah tingkat < 0 atau > 100%."
     ),
     "ds03_highdim_sparse" = list(
-      name = "High-Dimensional Sparse (Podes / Satellite Features)",
-      badge = "Regularization",
-      desc = "25 area-level administrative and remote-sensing predictors, containing only 3 true generative signals and 22 collinear noise variables.",
-      challenge = "Evaluates sparse Horseshoe priors, LASSO, and shrinkage regularizers against severe variance inflation and overfitting."
+      code = "ds03-sparse",
+      name_en = "High-Dim Sparse",
+      name_id = "Dimensi Tinggi (Sparse)",
+      badge_en = "25 Auxiliary Features",
+      badge_id = "25 Fitur Tambahan",
+      dgp_en = "25 area-level features containing only 3 true signals and 22 collinear noise variables.",
+      dgp_id = "25 prediktor tingkat area dengan hanya 3 sinyal nyata dan 22 variabel derau.",
+      challenge_en = "Evaluates regularization, horseshoe shrinkage, and feature screening against overfitting.",
+      challenge_id = "Menguji regularisasi, penyusutan horseshoe, dan seleksi fitur dari overfitting."
     ),
     "ds04_nonlinear_interaction" = list(
-      name = "Nonlinear & Interactions (MERF / Tree Territory)",
-      badge = "Nonlinear",
-      desc = "Complex synthetic DGP featuring sine waves, quadratic polynomials, square root transformations, and multiplicative interaction terms.",
-      challenge = "Tests Mixed Effects Random Forests (MERF) and non-parametric machine learning SAE against linear model misspecification."
+      code = "ds04-nonlinear",
+      name_en = "Nonlinear Complex",
+      name_id = "Nonlinier Kompleks",
+      badge_en = "Tree / Machine Learning",
+      badge_id = "Tree / Machine Learning",
+      dgp_en = "Complex DGP with sine waves, quadratic terms, square roots, and multiplicative interactions.",
+      dgp_id = "DGP kompleks dengan gelombang sinus, kuadratik, akar, dan interaksi multiplikatif.",
+      challenge_en = "Linear Fay-Herriot misspecification; tests Mixed Effects Random Forests (MERF).",
+      challenge_id = "Miskualifikasi model linier; menguji Mixed Effects Random Forests (MERF)."
     ),
     "ds05_spatial_correlated" = list(
-      name = "Spatial Correlated (SAR / CAR Topology)",
-      badge = "Spatial SAR",
-      desc = "Area random effects generated via simultaneous autoregressive SAR process (rho = 0.65) over an authentic Queen adjacency spatial matrix.",
-      challenge = "Assesses spatial borrowing of strength through Spatial Fay-Herriot (SEBLUP) and INLA Besag/BYM2 models."
+      code = "ds05-spatial",
+      name_en = "Spatial SAR",
+      name_id = "Spasial SAR",
+      badge_en = "SAR rho=0.65 (Matrix W)",
+      badge_id = "SAR rho=0.65 (Matriks W)",
+      dgp_en = "Area random effects generated via simultaneous autoregressive SAR (rho = 0.65) over Queen matrix.",
+      dgp_id = "Efek acak area dibangkitkan dari proses SAR autoregresif (rho = 0.65) dengan matriks Queen.",
+      challenge_en = "Spatial borrowing of strength through Spatial Fay-Herriot (SEBLUP) and INLA Besag.",
+      challenge_id = "Peminjaman kekuatan spasial melalui Spatial Fay-Herriot (SEBLUP) dan INLA Besag."
     ),
     "ds06_spatiotemporal_panel" = list(
-      name = "Spatio-Temporal Panel (D=50 x T=5)",
-      badge = "Panel AR(1)",
-      desc = "Multi-year repeated survey panel featuring AR(1) autocorrelation (phi = 0.70) across 5 discrete survey rounds.",
-      challenge = "Benchmarks dynamic spatio-temporal filters, Rao-Yu models, and tipsae panel estimators across space and time."
+      code = "ds06-panel",
+      name_en = "Panel Spatio-Temporal",
+      name_id = "Panel Spasio-Temporal",
+      badge_en = "Panel D=50 x T=5",
+      badge_id = "Panel D=50 x T=5",
+      dgp_en = "Repeated survey panel across 5 survey rounds with AR(1) autocorrelation (phi = 0.70).",
+      dgp_id = "Panel survei berulang 5 putaran dengan autokorelasi temporal AR(1) (phi = 0.70).",
+      challenge_en = "Dynamic temporal filters and longitudinal borrowing of strength across time and space.",
+      challenge_id = "Filter dinamik temporal dan peminjaman kekuatan melintasi ruang dan waktu."
     ),
     "ds07_extreme_outliers" = list(
-      name = "Extreme Outliers & Shocks (Contaminated)",
-      badge = "Robust SAE",
-      desc = "Contaminated response generating 4 disaster shock districts exhibiting +/- 8 sigma outlier deviations from regression trend.",
-      challenge = "Verifies robust M-estimation, Huber EBLUP, and heavy-tailed Student-t Bayesian shrinkage against leverage breakdowns."
+      code = "ds07-outliers",
+      name_en = "Extreme Outliers",
+      name_id = "Outlier Ekstrem",
+      badge_en = "Robust Huber SAE",
+      badge_id = "Robust Huber SAE",
+      dgp_en = "Contaminated response generating 4 disaster shock districts with +/- 8 sigma outlier shocks.",
+      dgp_id = "Data terkontaminasi dengan 4 kabupaten syok bencana (+/- 8 sigma dari tren regresi).",
+      challenge_en = "Verifies robust M-estimation, Huber EBLUP (saeRobust), and heavy-tailed shrinkage.",
+      challenge_id = "Menguji estimasi M-robust, Huber EBLUP (saeRobust), dan ketahanan terhadap leverage."
     ),
     "ds08_nested_subarea" = list(
-      name = "Nested Subarea (Two-Fold Hierarchy)",
-      badge = "Nested Two-Fold",
-      desc = "Hierarchical structure with districts (kabupaten) nested inside administrative provinces with dual random effects (v_p + u_pd).",
-      challenge = "Tests multi-level Hierarchical Bayes and two-fold subarea borrowing across multiple administrative tiers."
+      code = "ds08-nested",
+      name_en = "Nested Hierarchy",
+      name_id = "Hierarki Bersarang",
+      badge_en = "Two-Fold Subarea",
+      badge_id = "Dua Tingkat Bersarang",
+      dgp_en = "Hierarchical structure with districts (kabupaten) nested inside administrative provinces.",
+      dgp_id = "Struktur bertingkat kabupaten bersarang dalam provinsi administratif (v_p + u_pd).",
+      challenge_en = "Multi-level borrowing of strength across multiple administrative tiers.",
+      challenge_id = "Peminjaman kekuatan bertingkat antartingkat administrasi wilayah."
     )
   )
   
-  # Function to format HTML rows
-  rows <- character()
-  for (i in seq_len(nrow(df))) {
-    row <- df[i, ]
-    
-    # Model Badge styling
-    model_badge <- switch(
-      row$model,
-      "fastsaegpu_HB" = '<span class="badge bg-purple-subtle text-purple fw-semibold"><i class="fa-solid fa-bolt me-1"></i>fastsaegpu_HB</span>',
-      "Enhanced_MERF" = '<span class="badge bg-emerald-subtle text-emerald fw-semibold"><i class="fa-solid fa-tree me-1"></i>Enhanced_MERF</span>',
-      "fastsae_EBLUP" = '<span class="badge bg-primary-subtle text-primary fw-semibold"><i class="fa-solid fa-chart-line me-1"></i>fastsae_EBLUP</span>',
-      "fastsae_INLA" = '<span class="badge bg-warning-subtle text-warning-emphasis fw-semibold"><i class="fa-solid fa-fire me-1"></i>fastsae_INLA</span>',
-      "Direct" = '<span class="badge bg-secondary-subtle text-secondary fw-semibold"><i class="fa-solid fa-scale-balanced me-1"></i>Direct</span>',
-      sprintf('<span class="badge bg-light text-dark fw-semibold">%s</span>', row$model)
+  # Format package badge helper
+  get_package_badge <- function(model_str) {
+    pkg <- strsplit(model_str, " ")[[1]][1]
+    pkg_badge_class <- switch(
+      pkg,
+      "fastsaegpu" = "badge-purple",
+      "fastsae" = "badge-blue",
+      "tipsae" = "badge-teal",
+      "hbsae" = "badge-indigo",
+      "sae" = "badge-sky",
+      "saeRobust" = "badge-amber",
+      "survey" = "badge-gray",
+      "badge-gray"
     )
-    
-    # Relative efficiency formatting
-    eff_val <- row$RelEff_pct
-    eff_display <- if (is.na(eff_val)) {
-      '<span class="text-muted">-</span>'
-    } else if (eff_val > 105) {
-      sprintf('<span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>%.1f%%</span>', eff_val)
-    } else if (eff_val >= 98) {
-      sprintf('<span class="badge bg-secondary-subtle text-secondary fw-semibold">%.1f%%</span>', eff_val)
-    } else {
-      sprintf('<span class="badge bg-danger-subtle text-danger fw-semibold">%.1f%%</span>', eff_val)
-    }
-    
-    ram_val <- if ("Peak_RAM_MB" %in% names(row) && !is.na(row$Peak_RAM_MB)) {
-      sprintf("%.1f MB", row$Peak_RAM_MB)
-    } else {
-      '<span class="text-muted">-</span>'
-    }
-    
-    runtime_val <- if (!is.na(row$Runtime_sec)) {
-      sprintf("%.2fs", row$Runtime_sec)
-    } else {
-      '<span class="text-muted">-</span>'
-    }
-    
-    ds_label <- sprintf('<strong>%s</strong><br><small class="text-muted font-monospace">%s</small>', 
-                        row$dataset_name, row$dataset_id)
-    
-    order_ds <- row$dataset_id
-    order_model <- row$model
-    order_rrmse <- if (is.na(row$RRMSE_pct)) 999999 else row$RRMSE_pct
-    order_arb <- if (is.na(row$ARB_pct)) 999999 else row$ARB_pct
-    order_eff <- if (is.na(row$RelEff_pct)) -1 else row$RelEff_pct
-    order_corr <- if (is.na(row$Corr)) -1 else row$Corr
-    order_ram <- if ("Peak_RAM_MB" %in% names(row) && !is.na(row$Peak_RAM_MB)) row$Peak_RAM_MB else -1
-    order_time <- if (!is.na(row$Runtime_sec)) row$Runtime_sec else -1
-    
-    r <- paste0(
-      '<tr>',
-      '<td data-order="', order_ds, '" data-search="', row$dataset_id, ' ', row$dataset_name, '">', ds_label, '</td>',
-      '<td data-order="', order_model, '" data-search="', row$model, '">', model_badge, '</td>',
-      '<td class="text-end fw-semibold" data-order="', order_rrmse, '">', sprintf("%.2f%%", row$RRMSE_pct), '</td>',
-      '<td class="text-end" data-order="', order_arb, '">', sprintf("%.2f%%", row$ARB_pct), '</td>',
-      '<td class="text-center" data-order="', order_eff, '">', eff_display, '</td>',
-      '<td class="text-end" data-order="', order_corr, '">', sprintf("%.4f", row$Corr), '</td>',
-      '<td class="text-end font-monospace" data-order="', order_ram, '">', ram_val, '</td>',
-      '<td class="text-end font-monospace" data-order="', order_time, '">', runtime_val, '</td>',
-      '</tr>'
-    )
-    rows <- c(rows, r)
+    sprintf('<span class="pkg-badge %s">%s</span>', pkg_badge_class, model_str)
   }
-  table_rows_html <- paste(rows, collapse = "\n")
   
-  # Build Catalogue Cards
-  cards <- character()
+  # Calculate per-dataset best metrics
+  best_metrics <- list()
+  for (ds_id in names(dataset_meta)) {
+    sub_df <- df[df$dataset_id == ds_id, ]
+    if (nrow(sub_df) == 0) next
+    
+    val_rrmse <- sub_df$RRMSE_pct[!is.na(sub_df$RRMSE_pct)]
+    val_arb <- sub_df$ARB_pct[!is.na(sub_df$ARB_pct)]
+    val_eff <- sub_df$RelEff_pct[!is.na(sub_df$RelEff_pct)]
+    val_corr <- sub_df$Corr[!is.na(sub_df$Corr)]
+    val_ram <- sub_df$Peak_RAM_MB[!is.na(sub_df$Peak_RAM_MB) & sub_df$Peak_RAM_MB > 0]
+    val_time <- sub_df$Runtime_sec[!is.na(sub_df$Runtime_sec)]
+    
+    best_metrics[[ds_id]] <- list(
+      min_rrmse = if (length(val_rrmse) > 0) min(val_rrmse) else NA_real_,
+      min_arb = if (length(val_arb) > 0) min(val_arb) else NA_real_,
+      max_eff = if (length(val_eff) > 0) max(val_eff) else NA_real_,
+      max_corr = if (length(val_corr) > 0) max(val_corr) else NA_real_,
+      min_ram = if (length(val_ram) > 0) min(val_ram) else NA_real_,
+      min_time = if (length(val_time) > 0) min(val_time) else NA_real_
+    )
+    if ("Outlier_RRMSE" %in% names(sub_df)) {
+      val_out <- sub_df$Outlier_RRMSE[!is.na(sub_df$Outlier_RRMSE)]
+      best_metrics[[ds_id]]$min_outlier <- if (length(val_out) > 0) min(val_out) else NA_real_
+    }
+  }
+  
+  # Build per-dataset HTML tables
+  dataset_tables_html <- list()
   for (ds_id in names(dataset_meta)) {
     meta <- dataset_meta[[ds_id]]
-    card <- paste0(
-      '<div class="col-md-6 col-lg-3">',
-      '<div class="card h-100 archetype-card shadow-sm">',
-      '<div class="card-body">',
-      '<div class="d-flex justify-content-between align-items-start mb-2">',
-      '<span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace">', ds_id, '</span>',
-      '<span class="badge bg-secondary-subtle text-secondary rounded-pill">', meta$badge, '</span>',
-      '</div>',
-      '<h5 class="card-title text-light fw-bold fs-6 mb-2">', meta$name, '</h5>',
-      '<p class="card-text text-secondary small mb-3">', meta$desc, '</p>',
-      '<div class="archetype-challenge p-2 rounded bg-dark border border-secondary border-opacity-25">',
-      '<small class="text-warning-emphasis d-block fw-semibold mb-1"><i class="fa-solid fa-bullseye me-1"></i>Benchmark Target:</small>',
-      '<small class="text-light-emphasis">', meta$challenge, '</small>',
-      '</div>',
-      '</div>',
-      '</div>',
+    sub_df <- df[df$dataset_id == ds_id, ]
+    b <- best_metrics[[ds_id]]
+    
+    is_outlier_ds <- (ds_id == "ds07_extreme_outliers")
+    is_bounded_ds <- (ds_id == "ds02_bounded_rate")
+    
+    rows <- character()
+    for (j in seq_len(nrow(sub_df))) {
+      row <- sub_df[j, ]
+      
+      # Rank badge
+      rank_badge <- if (j == 1) {
+        '<span class="rank-badge rank-1"><i class="fa-solid fa-crown text-warning"></i> #1</span>'
+      } else if (j == 2) {
+        '<span class="rank-badge rank-2">#2</span>'
+      } else if (j == 3) {
+        '<span class="rank-badge rank-3">#3</span>'
+      } else {
+        sprintf('<span class="rank-badge rank-n">#%d</span>', j)
+      }
+      
+      model_html <- paste(rank_badge, get_package_badge(row$model))
+      
+      tol <- 1e-4
+      is_best_rrmse <- !is.na(row$RRMSE_pct) && !is.na(b$min_rrmse) && abs(row$RRMSE_pct - b$min_rrmse) <= tol
+      is_best_arb <- !is.na(row$ARB_pct) && !is.na(b$min_arb) && abs(row$ARB_pct - b$min_arb) <= tol
+      is_best_eff <- !is.na(row$RelEff_pct) && !is.na(b$max_eff) && abs(row$RelEff_pct - b$max_eff) <= tol
+      is_best_corr <- !is.na(row$Corr) && !is.na(b$max_corr) && abs(row$Corr - b$max_corr) <= tol
+      is_best_time <- !is.na(row$Runtime_sec) && !is.na(b$min_time) && abs(row$Runtime_sec - b$min_time) <= tol
+      is_best_ram <- !is.na(row$Peak_RAM_MB) && !is.na(b$min_ram) && abs(row$Peak_RAM_MB - b$min_ram) <= 0.1 && row$Peak_RAM_MB > 0
+      
+      cell_rrmse <- sprintf('<td class="text-end %s">%.2f%%%s</td>',
+                            if (is_best_rrmse) "best-cell" else "",
+                            row$RRMSE_pct,
+                            if (is_best_rrmse) ' <i class="fa-solid fa-star text-emerald ms-1 small"></i>' else "")
+      
+      cell_arb <- sprintf('<td class="text-end %s">%.2f%%%s</td>',
+                          if (is_best_arb) "best-cell" else "",
+                          row$ARB_pct,
+                          if (is_best_arb) ' <i class="fa-solid fa-star text-emerald ms-1 small"></i>' else "")
+      
+      eff_style <- if (is_best_eff) "best-cell" else if (row$RelEff_pct > 105) "text-success fw-semibold" else if (row$RelEff_pct >= 99) "text-body" else "text-danger"
+      cell_eff <- sprintf('<td class="text-end %s">%.1f%%%s</td>',
+                          eff_style,
+                          row$RelEff_pct,
+                          if (is_best_eff) ' <i class="fa-solid fa-star text-emerald ms-1 small"></i>' else "")
+      
+      cell_corr <- sprintf('<td class="text-end %s">%.4f%s</td>',
+                           if (is_best_corr) "best-cell" else "",
+                           row$Corr,
+                           if (is_best_corr) ' <i class="fa-solid fa-star text-emerald ms-1 small"></i>' else "")
+      
+      ram_val <- if (!is.na(row$Peak_RAM_MB)) sprintf("%.1f MB", row$Peak_RAM_MB) else "-"
+      cell_ram <- sprintf('<td class="text-end font-monospace %s">%s</td>',
+                          if (is_best_ram) "best-cell" else "", ram_val)
+      
+      time_val <- if (!is.na(row$Runtime_sec)) sprintf("%.2fs", row$Runtime_sec) else "-"
+      cell_time <- sprintf('<td class="text-end font-monospace %s">%s</td>',
+                           if (is_best_time) "best-cell" else "", time_val)
+      
+      extra_cells <- ""
+      if (is_outlier_ds) {
+        out_rrmse <- if (!is.na(row$Outlier_RRMSE)) sprintf("%.2f%%", row$Outlier_RRMSE) else "-"
+        is_best_out <- !is.na(row$Outlier_RRMSE) && !is.na(b$min_outlier) && abs(row$Outlier_RRMSE - b$min_outlier) <= tol
+        extra_cells <- sprintf('<td class="text-end %s">%s%s</td>',
+                               if (is_best_out) "best-cell" else "",
+                               out_rrmse,
+                               if (is_best_out) ' <i class="fa-solid fa-star text-emerald ms-1 small"></i>' else "")
+      } else if (is_bounded_ds) {
+        b_viol <- if (!is.na(row$Boundary_Violations)) as.character(row$Boundary_Violations) else "0"
+        extra_cells <- sprintf('<td class="text-center font-monospace %s">%s</td>',
+                               if (b_viol == "0") "text-success fw-bold" else "text-danger fw-bold", b_viol)
+      }
+      
+      row_html <- paste0(
+        '<tr>',
+        '<td>', model_html, '</td>',
+        cell_eff,
+        cell_rrmse,
+        cell_arb,
+        cell_corr,
+        extra_cells,
+        cell_ram,
+        cell_time,
+        '</tr>'
+      )
+      rows <- c(rows, row_html)
+    }
+    
+    extra_th_en <- ""
+    if (is_outlier_ds) {
+      extra_th_en <- '<th class="text-end" data-i18n="col_outlier_rrmse">Outlier RRMSE</th>'
+    } else if (is_bounded_ds) {
+      extra_th_en <- '<th class="text-center" data-i18n="col_violations">Violations (&lt;0 / &gt;1)</th>'
+    }
+    
+    table_wrapper <- paste0(
+      '<div class="table-responsive">',
+      '<table class="table table-hover align-middle mb-0 benchmark-table">',
+      '<thead>',
+      '<tr class="table-header-row text-uppercase small">',
+      '<th data-i18n="col_model">Model / Package</th>',
+      '<th class="text-end" data-i18n="col_releff">Rel. Efficiency (%)</th>',
+      '<th class="text-end" data-i18n="col_rrmse">RRMSE (%)</th>',
+      '<th class="text-end" data-i18n="col_arb">ARB (%)</th>',
+      '<th class="text-end" data-i18n="col_corr">Corr</th>',
+      extra_th_en,
+      '<th class="text-end" data-i18n="col_ram">Peak RAM</th>',
+      '<th class="text-end" data-i18n="col_runtime">Runtime</th>',
+      '</tr>',
+      '</thead>',
+      '<tbody>',
+      paste(rows, collapse = "\n"),
+      '</tbody>',
+      '</table>',
       '</div>'
     )
-    cards <- c(cards, card)
+    dataset_tables_html[[ds_id]] <- table_wrapper
   }
-  catalogue_cards_html <- paste(cards, collapse = "\n")
+  
+  # Build JSON data payload for interactive charts
+  chart_data_list <- list()
+  for (i in seq_len(nrow(df))) {
+    row <- df[i, ]
+    pkg <- strsplit(row$model, " ")[[1]][1]
+    chart_data_list[[i]] <- list(
+      dataset_id = row$dataset_id,
+      dataset_code = row$dataset_code,
+      dataset_name_en = row$dataset_name_en,
+      dataset_name_id = row$dataset_name_id,
+      model = row$model,
+      package = pkg,
+      RelEff = as.numeric(row$RelEff_pct),
+      RRMSE = as.numeric(row$RRMSE_pct),
+      ARB = as.numeric(row$ARB_pct),
+      Runtime = as.numeric(row$Runtime_sec),
+      RAM = as.numeric(row$Peak_RAM_MB)
+    )
+  }
+  chart_json_str <- toJSON(chart_data_list, auto_unbox = TRUE)
+  
   timestamp_str <- format(Sys.time(), "%Y-%m-%d %H:%M:%S UTC", tz = "UTC")
   
-  # Read or define HTML template
-  base_template <- '<!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+  # Build Tabs HTML
+  tabs_nav <- character()
+  tab_panes <- character()
+  first <- TRUE
+  
+  for (ds_id in names(dataset_meta)) {
+    meta <- dataset_meta[[ds_id]]
+    active_class <- if (first) "active" else ""
+    pane_active <- if (first) "show active" else ""
+    first <- FALSE
+    
+    tab_btn <- sprintf(
+      '<li class="nav-item" role="presentation">
+        <button class="nav-link %s" id="tab-%s" data-bs-toggle="pill" data-bs-target="#pane-%s" type="button" role="tab">
+          <span class="font-monospace fw-semibold">%s</span>
+          <span class="d-none d-md-inline ms-1 text-muted small tab-name" data-name-en="%s" data-name-id="%s">%s</span>
+        </button>
+      </li>',
+      active_class, meta$code, meta$code, meta$code, meta$name_en, meta$name_id, meta$name_id
+    )
+    tabs_nav <- c(tabs_nav, tab_btn)
+    
+    tbl_content <- dataset_tables_html[[ds_id]]
+    pane <- sprintf(
+      '<div class="tab-pane fade %s" id="pane-%s" role="tabpanel">
+        <div class="card dataset-card mb-4">
+          <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace">%s</span>
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill badge-meta" data-en="%s" data-id="%s">%s</span>
+              </div>
+              <h4 class="h5 fw-bold mb-0 text-title" data-en="%s" data-id="%s">%s</h4>
+            </div>
+            <div class="text-end">
+              <span class="text-muted small"><i class="fa-solid fa-bullseye text-warning me-1"></i><span data-i18n="benchmark_goal">Fokus Pengujian:</span></span>
+              <p class="text-body-secondary small mb-0 challenge-text" data-en="%s" data-id="%s">%s</p>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            %s
+          </div>
+          <div class="card-footer bg-transparent border-top py-2 px-3 d-flex justify-content-between align-items-center text-muted small">
+            <span><i class="fa-solid fa-circle-info me-1"></i><span data-i18n="dgp_label">Struktur DGP:</span> <span class="dgp-text" data-en="%s" data-id="%s">%s</span></span>
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-crown text-warning me-1"></i><span data-i18n="best_legend">Nilai terbaik ditandai hijau</span></span>
+          </div>
+        </div>
+      </div>',
+      pane_active, meta$code, meta$code, meta$badge_en, meta$badge_id, meta$badge_id,
+      meta$name_en, meta$name_id, meta$name_id,
+      meta$challenge_en, meta$challenge_id, meta$challenge_id,
+      tbl_content,
+      meta$dgp_en, meta$dgp_id, meta$dgp_id
+    )
+    tab_panes <- c(tab_panes, pane)
+  }
+  
+  # Dataset dropdown options
+  ds_options <- character()
+  for (ds_id in names(dataset_meta)) {
+    meta <- dataset_meta[[ds_id]]
+    opt <- sprintf('<option value="%s">%s (%s)</option>', ds_id, meta$name_id, meta$code)
+    ds_options <- c(ds_options, opt)
+  }
+  
+  # Base HTML Template (using placeholders)
+  html_template <- '<!DOCTYPE html>
+<html lang="id" data-bs-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SAE Benchmark Lab | Official BPS Two-Stage Sampling Testbed</title>
+  <title>SAE Benchmark Lab | Evaluasi Model Small Area Estimation</title>
   
   <!-- CSS Frameworks -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/2.0.2/css/dataTables.bootstrap5.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 
   <style>
     :root {
       --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --font-mono: "JetBrains Mono", monospace;
-      --card-bg: #121826;
-      --border-color: #242f49;
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --border-subtle: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --best-bg: #ecfdf5;
+      --best-text: #047857;
+      --best-border: #a7f3d0;
     }
+
+    [data-bs-theme="dark"] {
+      --bg-page: #090d16;
+      --bg-card: #111827;
+      --border-subtle: #1f2937;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --best-bg: rgba(16, 185, 129, 0.16);
+      --best-text: #6ee7b7;
+      --best-border: rgba(16, 185, 129, 0.4);
+    }
+
     body {
       font-family: var(--font-sans);
-      background-color: #0b0f19;
-      color: #e2e8f0;
+      background-color: var(--bg-page);
+      color: var(--text-main);
       min-height: 100vh;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
+
     .font-monospace {
       font-family: var(--font-mono) !important;
     }
+
     .navbar {
-      background-color: rgba(11, 15, 25, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border-color);
+      background-color: var(--bg-card);
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background-color 0.2s ease, border-color 0.2s ease;
     }
+
     .hero-section {
-      background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-      padding: 3.5rem 0 2rem;
-      border-bottom: 1px solid rgba(36, 47, 73, 0.4);
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid var(--border-subtle);
+      background: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.05) 0%, transparent 65%);
     }
+
     .kpi-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      transition: transform 0.2s ease, border-color 0.2s ease;
-      position: relative;
-      overflow: hidden;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     }
     .kpi-card:hover {
       transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
       border-color: #3b82f6;
     }
-    .kpi-card::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-    }
-    .archetype-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
+
+    .dataset-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
       border-radius: 12px;
-      transition: transform 0.2s ease, border-color 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
     }
-    .archetype-card:hover {
-      transform: translateY(-3px);
-      border-color: #6366f1;
-    }
-    .table-container {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 14px;
-      padding: 1.5rem;
-    }
-    table.dataTable {
-      border-collapse: separate !important;
-      border-spacing: 0;
-    }
-    .text-purple { color: #a855f7 !important; }
-    .bg-purple-subtle { background-color: rgba(168, 85, 247, 0.15) !important; }
-    .text-emerald { color: #10b981 !important; }
-    .bg-emerald-subtle { background-color: rgba(16, 185, 129, 0.15) !important; }
-    .code-box {
-      background-color: #050811;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 1rem 1.25rem;
-      position: relative;
-    }
-    .copy-btn {
-      position: absolute;
-      top: 0.75rem;
-      right: 0.75rem;
-      font-size: 0.75rem;
-    }
+
     .nav-pills .nav-link {
-      color: #94a3b8;
+      color: var(--text-muted);
       border-radius: 8px;
-      padding: 0.5rem 1rem;
-      font-weight: 500;
+      padding: 0.5rem 0.9rem;
+      font-size: 0.875rem;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .nav-pills .nav-link:hover {
+      background-color: rgba(59, 130, 246, 0.08);
+      color: #2563eb;
     }
     .nav-pills .nav-link.active {
-      background-color: #3b82f6;
-      color: #ffffff;
+      background-color: #2563eb;
+      color: #ffffff !important;
     }
-    .scheme-step {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
+    .nav-pills .nav-link.active .tab-name {
+      color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    .benchmark-table {
+      font-size: 0.875rem;
+    }
+    .benchmark-table th {
+      background-color: rgba(148, 163, 184, 0.05);
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      padding: 0.75rem 1rem;
+    }
+    .benchmark-table td {
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.75rem 1rem;
+    }
+    .benchmark-table tbody tr:hover td {
+      background-color: rgba(59, 130, 246, 0.04);
+    }
+
+    /* Cell best styling */
+    .best-cell {
+      background-color: var(--best-bg) !important;
+      color: var(--best-text) !important;
+      font-weight: 700 !important;
+      border-radius: 4px;
+    }
+
+    /* Rank badges */
+    .rank-badge {
+      display: inline-block;
+      min-width: 28px;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 6px;
+      margin-right: 6px;
+    }
+    .rank-1 { background-color: rgba(234, 179, 8, 0.15); color: #ca8a04; border: 1px solid rgba(234, 179, 8, 0.3); }
+    .rank-2 { background-color: rgba(148, 163, 184, 0.15); color: #64748b; border: 1px solid rgba(148, 163, 184, 0.3); }
+    .rank-3 { background-color: rgba(217, 119, 6, 0.15); color: #b45309; border: 1px solid rgba(217, 119, 6, 0.3); }
+    .rank-n { background-color: transparent; color: var(--text-muted); }
+
+    /* Package Badges */
+    .pkg-badge {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      display: inline-block;
+    }
+    .badge-purple { background-color: rgba(168, 85, 247, 0.12); color: #9333ea; border-color: rgba(168, 85, 247, 0.25); }
+    .badge-blue { background-color: rgba(59, 130, 246, 0.12); color: #2563eb; border-color: rgba(59, 130, 246, 0.25); }
+    .badge-teal { background-color: rgba(20, 184, 166, 0.12); color: #0d9488; border-color: rgba(20, 184, 166, 0.25); }
+    .badge-indigo { background-color: rgba(99, 102, 241, 0.12); color: #4f46e5; border-color: rgba(99, 102, 241, 0.25); }
+    .badge-sky { background-color: rgba(2, 132, 199, 0.12); color: #0284c7; border-color: rgba(2, 132, 199, 0.25); }
+    .badge-amber { background-color: rgba(245, 158, 11, 0.12); color: #d97706; border-color: rgba(245, 158, 11, 0.25); }
+    .badge-gray { background-color: rgba(148, 163, 184, 0.12); color: #475569; border-color: rgba(148, 163, 184, 0.25); }
+
+    [data-bs-theme="dark"] .badge-purple { color: #c084fc; border-color: rgba(168, 85, 247, 0.35); }
+    [data-bs-theme="dark"] .badge-blue { color: #60a5fa; border-color: rgba(59, 130, 246, 0.35); }
+    [data-bs-theme="dark"] .badge-teal { color: #2dd4bf; border-color: rgba(20, 184, 166, 0.35); }
+    [data-bs-theme="dark"] .badge-indigo { color: #818cf8; border-color: rgba(99, 102, 241, 0.35); }
+    [data-bs-theme="dark"] .badge-sky { color: #38bdf8; border-color: rgba(2, 132, 199, 0.35); }
+    [data-bs-theme="dark"] .badge-amber { color: #fbbf24; border-color: rgba(245, 158, 11, 0.35); }
+    [data-bs-theme="dark"] .badge-gray { color: #94a3b8; border-color: rgba(148, 163, 184, 0.35); }
+
+    .chart-container-box {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.25rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      height: 100%;
+    }
+
+    .methodology-box {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
       border-radius: 12px;
       padding: 1.5rem;
-      height: 100%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
   </style>
 </head>
 <body>
 
   <!-- Navigation -->
-  <nav class="navbar navbar-expand-lg sticky-top">
+  <nav class="navbar navbar-expand-lg sticky-top py-2">
     <div class="container-xl">
-      <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-white" href="#">
-        <i class="fa-solid fa-chart-pie text-primary fs-4"></i>
-        <span>SAE Benchmark Lab</span>
+      <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-decoration-none" href="#">
+        <i class="fa-solid fa-chart-line text-primary fs-4"></i>
+        <span class="text-body fw-bold fs-5">SAE Benchmark Lab</span>
       </a>
-      <div class="d-flex align-items-center gap-3">
-        <a href="https://github.com/ridsonap/sae-benchmark-lab" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-          <i class="fa-brands fa-github me-1"></i> GitHub Repo
+
+      <div class="d-flex align-items-center gap-2">
+        <!-- Language Switcher Button -->
+        <button id="langToggleBtn" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-flex align-items-center gap-1" title="Ganti Bahasa / Switch Language">
+          <i class="fa-solid fa-globe"></i>
+          <span id="langText" class="fw-semibold font-monospace">EN</span>
+        </button>
+
+        <!-- Dark / Light Theme Toggle -->
+        <button id="themeToggleBtn" class="btn btn-outline-secondary btn-sm rounded-circle p-2" style="width: 34px; height: 34px;" title="Mode Gelap/Terang">
+          <i id="themeIcon" class="fa-solid fa-moon"></i>
+        </button>
+
+        <a href="https://github.com/ridsonap/sae-benchmark-lab" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-none d-sm-inline-flex align-items-center gap-1">
+          <i class="fa-brands fa-github"></i>
+          <span>GitHub</span>
         </a>
       </div>
     </div>
@@ -376,58 +647,57 @@ generate_benchmark_dashboard <- function(
   <!-- Hero Header -->
   <section class="hero-section text-center">
     <div class="container-xl">
-      <div class="d-flex justify-content-center gap-2 mb-3 flex-wrap">
+      <div class="d-flex justify-content-center gap-2 mb-2 flex-wrap">
         <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">
-          <i class="fa-solid fa-check-double me-1"></i> Official BPS Susenas Design
+          <i class="fa-solid fa-layer-group me-1"></i> 8 Dataset Archetypes
         </span>
         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
-          <i class="fa-solid fa-database me-1"></i> Exact Finite Population Ground Truth
+          <i class="fa-solid fa-bullseye me-1"></i> Exact Ground Truth
         </span>
         <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-1">
-          <i class="fa-solid fa-microchip me-1"></i> RAM & Latency Profiling
+          <i class="fa-solid fa-microchip me-1"></i> Profiling Waktu & RAM
         </span>
       </div>
-      <h1 class="display-5 fw-extrabold text-white mb-2">SAE Benchmark Lab</h1>
-      <p class="h5 fw-medium text-info mb-3">Official BPS Two-Stage Stratified Cluster Sampling Testbed</p>
-      <p class="lead text-secondary mx-auto mb-4" style="max-width: 820px;">
-        Standardized, reproducible testbed for evaluating <strong>Small Area Estimation (SAE)</strong> models under 
-        two-stage stratified cluster sampling against exact finite-population Ground Truth.
+
+      <h1 class="display-6 fw-bold mb-2">SAE Benchmark Lab</h1>
+      <p class="lead text-muted mx-auto mb-4" style="max-width: 760px;" data-i18n="hero_subtitle">
+        Tolok ukur terstandar evaluasi model Small Area Estimation (SAE) terhadap Ground Truth populasi murni dengan metrik akurasi, efisiensi relatif, dan latensi komputasi.
       </p>
-      
-      <!-- KPI Cards -->
-      <div class="row g-3 justify-content-center text-start mt-2">
-        <div class="col-6 col-md-4 col-lg-2">
-          <div class="card kpi-card p-3">
-            <span class="text-secondary small fw-medium text-uppercase">Total Models</span>
-            <div class="fs-3 fw-bold text-white mt-1">{{TOTAL_MODELS}}</div>
-            <span class="text-muted small">Standard Battery</span>
+
+      <!-- KPI Summary Cards -->
+      <div class="row g-3 justify-content-center text-start">
+        <div class="col-6 col-md-3 col-lg-2">
+          <div class="kpi-card p-3">
+            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_total_models">Total Model</span>
+            <div class="fs-4 fw-bold text-body mt-1">{{TOTAL_MODELS}}</div>
+            <span class="text-muted small">Standard & Robust</span>
           </div>
         </div>
-        <div class="col-6 col-md-4 col-lg-2">
-          <div class="card kpi-card p-3">
-            <span class="text-secondary small fw-medium text-uppercase">8 Dataset Archetypes</span>
-            <div class="fs-3 fw-bold text-white mt-1">{{TOTAL_DATASETS}}</div>
-            <span class="text-muted small">Structural Challenges</span>
+        <div class="col-6 col-md-3 col-lg-2">
+          <div class="kpi-card p-3">
+            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_datasets">Arketipe Data</span>
+            <div class="fs-4 fw-bold text-body mt-1">{{TOTAL_DATASETS}}</div>
+            <span class="text-muted small">Tantangan SAE</span>
           </div>
         </div>
-        <div class="col-6 col-md-4 col-lg-3">
-          <div class="card kpi-card p-3">
-            <span class="text-secondary small fw-medium text-uppercase">Top RelEff Gain</span>
-            <div class="fs-3 fw-bold text-success mt-1">{{TOP_EFF_VAL}}</div>
-            <span class="text-muted small text-truncate d-block">{{TOP_EFF_DETAIL}}</span>
+        <div class="col-6 col-md-3 col-lg-3">
+          <div class="kpi-card p-3">
+            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_top_gain">Efisiensi Maksimal</span>
+            <div class="fs-4 fw-bold text-success mt-1">{{TOP_EFF_VAL}}</div>
+            <span class="text-muted small text-truncate d-block">{{TOP_EFF_MODEL}} ({{TOP_EFF_DS}})</span>
           </div>
         </div>
-        <div class="col-6 col-md-4 col-lg-2">
-          <div class="card kpi-card p-3">
-            <span class="text-secondary small fw-medium text-uppercase">Fastest Model</span>
-            <div class="fs-3 fw-bold text-info mt-1">{{FASTEST_MODEL}}</div>
+        <div class="col-6 col-md-3 col-lg-3">
+          <div class="kpi-card p-3">
+            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_fastest">Model Tercepat</span>
+            <div class="fs-4 fw-bold text-primary mt-1 text-truncate">{{FASTEST_MODEL}}</div>
             <span class="text-muted small">{{FASTEST_TIME}}</span>
           </div>
         </div>
-        <div class="col-6 col-md-4 col-lg-3">
-          <div class="card kpi-card p-3">
-            <span class="text-secondary small fw-medium text-uppercase">Lowest Memory</span>
-            <div class="fs-3 fw-bold text-purple mt-1">{{LOWEST_RAM_MODEL}}</div>
+        <div class="col-6 col-md-3 col-lg-2">
+          <div class="kpi-card p-3">
+            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_lowest_ram">Hemat Memori</span>
+            <div class="fs-4 fw-bold text-info mt-1 text-truncate">{{LOWEST_RAM_MODEL}}</div>
             <span class="text-muted small">{{LOWEST_RAM_VAL}}</span>
           </div>
         </div>
@@ -436,340 +706,535 @@ generate_benchmark_dashboard <- function(
   </section>
 
   <!-- Main Content -->
-  <main class="container-xl py-5">
+  <main class="container-xl py-4">
 
-    <!-- Interactive Leaderboard Table Section -->
-    <div class="mb-5">
-      <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-3">
-        <div>
-          <h2 class="h3 fw-bold text-white mb-1"><i class="fa-solid fa-trophy text-warning me-2"></i>Master Leaderboard</h2>
-          <p class="text-secondary small mb-0">Empirical metrics evaluated across finite-population ground truth</p>
-        </div>
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-          <div class="d-flex align-items-center gap-1">
-            <label for="datasetFilter" class="text-secondary small text-nowrap"><i class="fa-solid fa-filter me-1"></i>Dataset:</label>
-            <select id="datasetFilter" class="form-select form-select-sm bg-dark text-light border-secondary">
-              <option value="">All Datasets</option>
-              <option value="ds01_continuous_linear">ds01: Continuous Linear</option>
-              <option value="ds02_bounded_rate">ds02: Bounded Rate</option>
-              <option value="ds03_highdim_sparse">ds03: High-Dim Sparse</option>
-              <option value="ds04_nonlinear_interaction">ds04: Nonlinear & Inter.</option>
-              <option value="ds05_spatial_correlated">ds05: Spatial Correlated</option>
-              <option value="ds06_spatiotemporal_panel">ds06: Spatio-Temporal Panel</option>
-              <option value="ds07_extreme_outliers">ds07: Extreme Outliers</option>
-              <option value="ds08_nested_subarea">ds08: Nested Subarea</option>
-            </select>
-          </div>
-          <div class="d-flex align-items-center gap-1">
-            <label for="modelFilter" class="text-secondary small text-nowrap"><i class="fa-solid fa-cube me-1"></i>Model:</label>
-            <select id="modelFilter" class="form-select form-select-sm bg-dark text-light border-secondary">
-              <option value="">All Models</option>
-              <option value="Direct">Direct</option>
-              <option value="fastsaegpu_HB">fastsaegpu_HB</option>
-              <option value="Enhanced_MERF">Enhanced_MERF</option>
-              <option value="fastsae_EBLUP">fastsae_EBLUP</option>
-              <option value="fastsae_INLA">fastsae_INLA</option>
-            </select>
-          </div>
-          <button id="resetFiltersBtn" class="btn btn-outline-secondary btn-sm">
-            <i class="fa-solid fa-filter-circle-xmark me-1"></i> Reset
-          </button>
-        </div>
-      </div>
-
-      <div class="table-container shadow-sm">
-        <div class="table-responsive">
-          <table id="leaderboardTable" class="table table-hover align-middle mb-0" style="width: 100%;">
-            <thead>
-              <tr class="text-secondary small text-uppercase">
-                <th>Dataset</th>
-                <th>Model</th>
-                <th class="text-end">RRMSE (%)</th>
-                <th class="text-end">ARB (%)</th>
-                <th class="text-center">Rel. Efficiency (%)</th>
-                <th class="text-end">Corr</th>
-                <th class="text-end">Peak RAM (MB)</th>
-                <th class="text-end">Runtime (s)</th>
-              </tr>
-            </thead>
-            <tbody>
-{{TABLE_ROWS}}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Comparative Visualizations Section -->
-    <div class="mb-5">
+    <!-- Interactive Charts Section -->
+    <section class="mb-5">
       <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
-          <h2 class="h3 fw-bold text-white mb-1"><i class="fa-solid fa-chart-column text-primary me-2"></i>Comparative Visualizations</h2>
-          <p class="text-secondary small mb-0">Direct graphical comparisons across models and dataset archetypes</p>
+          <h2 class="h4 fw-bold mb-1"><i class="fa-solid fa-chart-scatter text-primary me-2"></i><span data-i18n="chart_section_title">Visualisasi Interaktif Trade-Off Model</span></h2>
+          <p class="text-muted small mb-0" data-i18n="chart_section_subtitle">Eksplorasi hubungan waktu komputasi versus akurasi dan efisiensi relatif model</p>
         </div>
-        <ul class="nav nav-pills" id="plotTabs" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="tab-releff" data-bs-toggle="pill" data-bs-target="#plot-releff" type="button" role="tab">
-              <i class="fa-solid fa-arrow-trend-up me-1"></i> Relative Efficiency
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-rrmse" data-bs-toggle="pill" data-bs-target="#plot-rrmse" type="button" role="tab">
-              <i class="fa-solid fa-chart-simple me-1"></i> RRMSE Comparison
-            </button>
-          </li>
-        </ul>
-      </div>
-
-      <div class="tab-content table-container p-3">
-        <div class="tab-pane fade show active text-center" id="plot-releff" role="tabpanel">
-          <img src="{{PLOTS_PATH}}/leaderboard_relative_efficiency.png" alt="Relative Efficiency Comparison" class="img-fluid rounded shadow-sm border border-secondary border-opacity-25" style="max-height: 580px; width: 100%; object-fit: contain;">
+        <div class="d-flex align-items-center gap-2">
+          <label for="chartDatasetSelect" class="text-muted small text-nowrap fw-semibold"><i class="fa-solid fa-filter me-1"></i><span data-i18n="filter_dataset">Pilih Dataset:</span></label>
+          <select id="chartDatasetSelect" class="form-select form-select-sm bg-body border-secondary-subtle">
+            <option value="ALL" data-i18n="opt_all_datasets">Semua Dataset</option>
+            {{DS_OPTIONS}}
+          </select>
         </div>
-        <div class="tab-pane fade text-center" id="plot-rrmse" role="tabpanel">
-          <img src="{{PLOTS_PATH}}/leaderboard_rrmse_comparison.png" alt="RRMSE Comparison" class="img-fluid rounded shadow-sm border border-secondary border-opacity-25" style="max-height: 580px; width: 100%; object-fit: contain;">
-        </div>
-      </div>
-    </div>
-
-    <!-- BPS Two-Stage Sampling Scheme -->
-    <div class="mb-5">
-      <div class="mb-3">
-        <h2 class="h3 fw-bold text-white mb-1"><i class="fa-solid fa-sitemap text-info me-2"></i>BPS Two-Stage Stratified Cluster Sampling Scheme</h2>
-        <p class="text-secondary small mb-0">Faithful implementation of official Badan Pusat Statistik Susenas design</p>
       </div>
 
       <div class="row g-3">
-        <div class="col-md-4">
-          <div class="scheme-step">
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <span class="badge bg-primary rounded-circle p-2" style="width: 28px; height: 28px;">1</span>
-              <h5 class="fs-6 text-white fw-bold mb-0">Stage 1: Primary Sampling Unit (PSU)</h5>
+        <div class="col-lg-7">
+          <div class="chart-container-box">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="fs-6 fw-bold mb-0"><i class="fa-solid fa-gauge-high text-info me-1"></i> <span data-i18n="chart_scatter_title">Runtime vs Efisiensi Relatif (Pareto Frontier)</span></h5>
+              <span class="badge bg-light text-dark border small" data-i18n="chart_scatter_badge">Makin ke atas & kiri makin unggul</span>
             </div>
-            <p class="text-secondary small mb-2">
-              Stratified by Urban/Rural within each Kabupaten. Selection of <strong>Blok Sensus (BS)</strong> via <strong>Probability Proportional to Size (PPS)</strong> without replacement based on household counts:
-            </p>
-            <div class="code-box font-monospace text-info small py-1 px-2 mb-0">
-              &pi;<sub>1,dhi</sub> = a<sub>dh</sub> &times; (M<sub>dhi</sub> / &sum; M<sub>dhk</sub>)
+            <div style="position: relative; height: 340px;">
+              <canvas id="scatterChart"></canvas>
             </div>
           </div>
         </div>
-
-        <div class="col-md-4">
-          <div class="scheme-step">
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <span class="badge bg-info rounded-circle p-2" style="width: 28px; height: 28px;">2</span>
-              <h5 class="fs-6 text-white fw-bold mb-0">Stage 2: Secondary Sampling Unit (SSU)</h5>
+        <div class="col-lg-5">
+          <div class="chart-container-box">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="fs-6 fw-bold mb-0"><i class="fa-solid fa-bars-staggered text-success me-1"></i> <span data-i18n="chart_bar_title">Perbandingan Efisiensi Relatif (%)</span></h5>
+              <span class="badge bg-light text-dark border small" data-i18n="chart_bar_badge">Baseline Direct = 100%</span>
             </div>
-            <p class="text-secondary small mb-2">
-              Systematic sampling of exactly <strong>m = 10 households</strong> per sampled Blok Sensus with a random start. Conditional inclusion probability:
-            </p>
-            <div class="code-box font-monospace text-info small py-1 px-2 mb-0">
-              &pi;<sub>2|1,dhij</sub> = 10 / M<sub>dhi</sub>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-4">
-          <div class="scheme-step">
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <span class="badge bg-success rounded-circle p-2" style="width: 28px; height: 28px;">3</span>
-              <h5 class="fs-6 text-white fw-bold mb-0">Design Weights & Variance</h5>
-            </div>
-            <p class="text-secondary small mb-2">
-              Calibrated weights <code>w<sub>dhij</sub> = M<sub>dh</sub> / (10 a<sub>dh</sub>)</code>. Sampling variance &psi;<sub>d</sub> estimated using <strong>Taylor Series Linearization</strong> via <code>survey::svydesign</code>, capturing intra-cluster clustering effects (Deff &gt; 1).
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Dataset Archetype Catalogue -->
-    <div class="mb-5">
-      <div class="mb-3">
-        <h2 class="h3 fw-bold text-white mb-1"><i class="fa-solid fa-boxes-stacked text-warning me-2"></i>Dataset Archetype Catalogue</h2>
-        <p class="text-secondary small mb-0">8 standardized data generating processes reflecting core Small Area Estimation challenges</p>
-      </div>
-      <div class="row g-3">
-{{CATALOGUE_CARDS}}
-      </div>
-    </div>
-
-    <!-- Quick Start Plug-and-Play -->
-    <div class="mb-5">
-      <div class="mb-3">
-        <h2 class="h3 fw-bold text-white mb-1"><i class="fa-solid fa-terminal text-success me-2"></i>Plug-and-Play Benchmark</h2>
-        <p class="text-secondary small mb-0">Benchmark your custom SAE model in 1 line of R</p>
-      </div>
-
-      <div class="row g-3">
-        <div class="col-lg-6">
-          <div class="card bg-dark border border-secondary border-opacity-25 h-100 p-3">
-            <h5 class="fs-6 text-white fw-bold mb-2"><i class="fa-solid fa-code me-2 text-primary"></i>R API (Custom Estimator)</h5>
-            <div class="code-box">
-              <button class="btn btn-outline-secondary btn-sm copy-btn" onclick="copyCode(\'r-snippet\', this)">
-                <i class="fa-regular fa-copy me-1"></i> Copy
-              </button>
-              <pre id="r-snippet" class="mb-0 font-monospace text-light small"><code># 1. Source the benchmark engine
-source("engine/benchmark_runner.R")
-
-# 2. Define your model wrapper (accepts ds and formula_str)
-my_custom_sae <- function(ds, formula_str) {
-  fit <- my_pkg::model(formula = as.formula(formula_str), vardir = "psi_dir", data = ds)
-  return(fit$estimates)
-}
-
-# 3. Benchmark against the full battery
-results <- run_benchmark_suite(models = list("MyModel" = my_custom_sae))</code></pre>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-6">
-          <div class="card bg-dark border border-secondary border-opacity-25 h-100 p-3">
-            <h5 class="fs-6 text-white fw-bold mb-2"><i class="fa-solid fa-terminal me-2 text-info"></i>Terminal CLI</h5>
-            <div class="code-box">
-              <button class="btn btn-outline-secondary btn-sm copy-btn" onclick="copyCode(\'cli-snippet\', this)">
-                <i class="fa-regular fa-copy me-1"></i> Copy
-              </button>
-              <pre id="cli-snippet" class="mb-0 font-monospace text-light small"><code># Run full battery across all 8 datasets
-Rscript run_test.R
-
-# Quick check on first 3 datasets
-Rscript run_test.R --quick
-
-# Run on a single specific archetype
-Rscript run_test.R --dataset=ds02_bounded_rate</code></pre>
+            <div style="position: relative; height: 340px;">
+              <canvas id="barChart"></canvas>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
+
+    <!-- Leaderboard Per Dataset Section -->
+    <section class="mb-5">
+      <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-2">
+        <div>
+          <h2 class="h4 fw-bold mb-1"><i class="fa-solid fa-table-list text-primary me-2"></i><span data-i18n="table_section_title">Tabel Evaluasi Model per Dataset</span></h2>
+          <p class="text-muted small mb-0" data-i18n="table_section_subtitle">Setiap dataset menguji tantangan terpisah; nilai terbaik per metrik diberi highlight sel hijau.</p>
+        </div>
+      </div>
+
+      <!-- Dataset Pills Navigation -->
+      <ul class="nav nav-pills mb-3 gap-1 overflow-x-auto pb-1 flex-nowrap" id="datasetTabs" role="tablist">
+        {{TABS_NAV}}
+      </ul>
+
+      <!-- Dataset Tab Content Panes -->
+      <div class="tab-content" id="datasetTabContent">
+        {{TAB_PANES}}
+      </div>
+    </section>
+
+    <!-- Sampling Methodology Section (Moved from Hero) -->
+    <section class="mb-5">
+      <div class="methodology-box">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <i class="fa-solid fa-graduation-cap text-primary fs-5"></i>
+          <h3 class="h5 fw-bold mb-0" data-i18n="methodology_title">Metodologi Sampling & Ground Truth</h3>
+        </div>
+        <p class="text-muted small mb-3" data-i18n="methodology_desc">
+          Seluruh benchmark dibangun di atas kerangka kerja <strong>Two-Stage Stratified Cluster Sampling</strong> yang mengadopsi standar Survei Sosial Ekonomi Nasional (Susenas) Badan Pusat Statistik (BPS) Indonesia, dievaluasi terhadap nilai murni <em>Ground Truth</em> populasi sintetis (~120.000 rumah tangga).
+        </p>
+
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="p-3 rounded bg-body-tertiary border h-100">
+              <h6 class="fw-bold mb-1"><span class="badge bg-primary rounded-circle me-1">1</span> <span data-i18n="stage1_title">Tahap 1: Pemilihan Blok Sensus (PSU)</span></h6>
+              <p class="text-muted small mb-2" data-i18n="stage1_desc">
+                Stratifikasi perkotaan/perdesaan di setiap kabupaten. Pemilihan Blok Sensus (BS) dilakukan dengan <em>Probability Proportional to Size (PPS)</em> tanpa pengembalian berdasarkan jumlah rumah tangga.
+              </p>
+              <div class="font-monospace text-primary small py-1 px-2 bg-body rounded border">
+                &pi;<sub>1,dhi</sub> = a<sub>dh</sub> &times; (M<sub>dhi</sub> / &sum; M<sub>dhk</sub>)
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="p-3 rounded bg-body-tertiary border h-100">
+              <h6 class="fw-bold mb-1"><span class="badge bg-info rounded-circle me-1">2</span> <span data-i18n="stage2_title">Tahap 2: Pemilihan Rumah Tangga (SSU)</span></h6>
+              <p class="text-muted small mb-2" data-i18n="stage2_desc">
+                Sampling sistematik tepat 10 rumah tangga per BS terpilih dengan awalan acak (<em>random start</em>). Peluang inklusi bersyarat:
+              </p>
+              <div class="font-monospace text-info small py-1 px-2 bg-body rounded border">
+                &pi;<sub>2|1,dhij</sub> = 10 / M<sub>dhi</sub>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="p-3 rounded bg-body-tertiary border h-100">
+              <h6 class="fw-bold mb-1"><span class="badge bg-success rounded-circle me-1">3</span> <span data-i18n="stage3_title">Penimbang & Varians Taylor</span></h6>
+              <p class="text-muted small mb-2" data-i18n="stage3_desc">
+                Bobot kalibrasi FWT memperhitungkan klastering. Varians sampling &psi;<sub>d</sub> dihitung via Taylor Series Linearization (<code>survey::svydesign</code>), menghasilkan efek desain realistis (<em>Deff &gt; 1</em>).
+              </p>
+              <div class="font-monospace text-success small py-1 px-2 bg-body rounded border">
+                w<sub>dhij</sub> = M<sub>dh</sub> / (10 a<sub>dh</sub>)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
   </main>
 
   <!-- Footer -->
-  <footer class="py-4 border-top border-secondary border-opacity-25 text-center text-secondary small">
+  <footer class="py-4 border-top text-center text-muted small">
     <div class="container-xl">
-      <p class="mb-1"><strong>SAE Benchmark Lab</strong> &bull; Badan Pusat Statistik (BPS) Two-Stage Cluster Sampling Testbed</p>
-      <p class="mb-0 text-muted font-monospace">Generated automatically on {{TIMESTAMP}}</p>
+      <p class="mb-1"><strong>SAE Benchmark Lab</strong> &bull; <span data-i18n="footer_title">Laboratorium Tolok Ukur Model Small Area Estimation</span></p>
+      <p class="mb-0 font-monospace">Generated automatically on {{TIMESTAMP}}</p>
     </div>
   </footer>
+
+  <!-- Embedded Benchmark Data -->
+  <script>
+    const benchmarkData = {{CHART_JSON}};
+  </script>
 
   <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.datatables.net/2.0.2/js/dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/2.0.2/js/dataTables.bootstrap5.min.js"></script>
 
   <script>
-    $(document).ready(function() {
-      var table = $(\'#leaderboardTable\').DataTable({
-        pageLength: 25,
-        lengthMenu: [[10, 25, 40, -1], [10, 25, 40, "All"]],
-        order: [[0, "asc"], [4, "desc"]],
-        language: {
-          search: "_INPUT_",
-          searchPlaceholder: "Search models, datasets..."
-        },
-        dom: \'<"d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3"lf>rt<"d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"ip>\'
-      });
+    // Bilingual Dictionary
+    const translations = {
+      id: {
+        page_title: "SAE Benchmark Lab | Evaluasi Model Small Area Estimation",
+        hero_subtitle: "Tolok ukur terstandar evaluasi model Small Area Estimation (SAE) terhadap Ground Truth populasi murni dengan metrik akurasi, efisiensi relatif, dan latensi komputasi.",
+        kpi_total_models: "Total Model",
+        kpi_datasets: "Arketipe Data",
+        kpi_top_gain: "Efisiensi Maksimal",
+        kpi_fastest: "Model Tercepat",
+        kpi_lowest_ram: "Hemat Memori",
+        chart_section_title: "Visualisasi Interaktif Trade-Off Model",
+        chart_section_subtitle: "Eksplorasi hubungan waktu komputasi versus akurasi dan efisiensi relatif model",
+        filter_dataset: "Pilih Dataset:",
+        opt_all_datasets: "Semua Dataset",
+        chart_scatter_title: "Runtime vs Efisiensi Relatif (Pareto Frontier)",
+        chart_scatter_badge: "Makin ke atas & kiri makin unggul",
+        chart_bar_title: "Perbandingan Efisiensi Relatif (%)",
+        chart_bar_badge: "Baseline Direct = 100%",
+        table_section_title: "Tabel Evaluasi Model per Dataset",
+        table_section_subtitle: "Setiap dataset menguji tantangan terpisah; nilai terbaik per metrik diberi highlight sel hijau.",
+        col_model: "Model / Package",
+        col_releff: "Efisiensi Relatif (%)",
+        col_rrmse: "RRMSE (%)",
+        col_arb: "ARB (%)",
+        col_corr: "Korelasi",
+        col_ram: "RAM Puncak",
+        col_runtime: "Waktu Eksekusi",
+        col_outlier_rrmse: "RRMSE Outlier",
+        col_violations: "Pelanggaran Batas (&lt;0 / &gt;1)",
+        benchmark_goal: "Fokus Pengujian:",
+        dgp_label: "Struktur DGP:",
+        best_legend: "Nilai terbaik ditandai hijau",
+        methodology_title: "Metodologi Sampling & Ground Truth",
+        methodology_desc: "Seluruh benchmark dibangun di atas kerangka kerja Two-Stage Stratified Cluster Sampling yang mengadopsi standar Survei Sosial Ekonomi Nasional (Susenas) Badan Pusat Statistik (BPS) Indonesia, dievaluasi terhadap nilai murni Ground Truth populasi sintetis (~120.000 rumah tangga).",
+        stage1_title: "Tahap 1: Pemilihan Blok Sensus (PSU)",
+        stage1_desc: "Stratifikasi perkotaan/perdesaan di setiap kabupaten. Pemilihan Blok Sensus (BS) dilakukan dengan Probability Proportional to Size (PPS) tanpa pengembalian berdasarkan jumlah rumah tangga.",
+        stage2_title: "Tahap 2: Pemilihan Rumah Tangga (SSU)",
+        stage2_desc: "Sampling sistematik tepat 10 rumah tangga per BS terpilih dengan awalan acak (random start).",
+        stage3_title: "Tahap 3: Penimbang & Varians Taylor",
+        stage3_desc: "Bobot kalibrasi FWT memperhitungkan klastering. Varians sampling dihitung via Taylor Series Linearization (survey::svydesign), menghasilkan efek desain realistis (Deff > 1).",
+        footer_title: "Laboratorium Tolok Ukur Model Small Area Estimation"
+      },
+      en: {
+        page_title: "SAE Benchmark Lab | Small Area Estimation Benchmark",
+        hero_subtitle: "A standardized testbed evaluating Small Area Estimation (SAE) models against exact finite population Ground Truth with accuracy, relative efficiency, and computational latency metrics.",
+        kpi_total_models: "Total Models",
+        kpi_datasets: "Data Archetypes",
+        kpi_top_gain: "Top RelEff Gain",
+        kpi_fastest: "Fastest Model",
+        kpi_lowest_ram: "Lowest Memory",
+        chart_section_title: "Interactive Model Trade-Off Visualizations",
+        chart_section_subtitle: "Explore computational time versus accuracy and relative efficiency curves",
+        filter_dataset: "Select Dataset:",
+        opt_all_datasets: "All Datasets",
+        chart_scatter_title: "Runtime vs Relative Efficiency (Pareto Frontier)",
+        chart_scatter_badge: "Top-left indicates superior trade-off",
+        chart_bar_title: "Relative Efficiency (%) Comparison",
+        chart_bar_badge: "Direct Estimator Baseline = 100%",
+        table_section_title: "Model Leaderboard by Dataset",
+        table_section_subtitle: "Each dataset tests distinct structural challenges; top metric performers highlighted in soft green.",
+        col_model: "Model / Package",
+        col_releff: "Rel. Efficiency (%)",
+        col_rrmse: "RRMSE (%)",
+        col_arb: "ARB (%)",
+        col_corr: "Correlation",
+        col_ram: "Peak RAM",
+        col_runtime: "Runtime",
+        col_outlier_rrmse: "Outlier RRMSE",
+        col_violations: "Boundary Violations (&lt;0 / &gt;1)",
+        benchmark_goal: "Benchmark Goal:",
+        dgp_label: "DGP Architecture:",
+        best_legend: "Best value highlighted in green",
+        methodology_title: "Sampling Methodology & Ground Truth",
+        methodology_desc: "All benchmark datasets are constructed from a synthetic finite population (~120,000 households) under Two-Stage Stratified Cluster Sampling mimicking national statistical survey standards (e.g. BPS Susenas).",
+        stage1_title: "Stage 1: Primary Sampling Unit (PSU)",
+        stage1_desc: "Stratified by Urban/Rural within each district. Census Blocks selected via Probability Proportional to Size (PPS) without replacement based on household counts.",
+        stage2_title: "Stage 2: Secondary Sampling Unit (SSU)",
+        stage2_desc: "Systematic sampling of exactly 10 households per sampled Census Block with a random start.",
+        stage3_title: "Stage 3: Weights & Taylor Linearization",
+        stage3_desc: "Design weights calibrated for cluster effects. Direct variance estimated via Taylor Series Linearization (survey::svydesign), capturing realistic clustering (Deff > 1).",
+        footer_title: "Small Area Estimation Model Benchmark Laboratory"
+      }
+    };
 
-      $(\'#datasetFilter\').on(\'change\', function() {
-        var val = $(this).val();
-        table.column(0).search(val ? val : \'\', true, false).draw();
-      });
+    let currentLang = localStorage.getItem("sae_lab_lang") || "id";
+    let currentTheme = localStorage.getItem("sae_lab_theme") || "light";
 
-      $(\'#modelFilter\').on(\'change\', function() {
-        var val = $(this).val();
-        table.column(1).search(val ? val : \'\', true, false).draw();
-      });
+    // Set Initial Theme
+    function applyTheme(theme) {
+      document.documentElement.setAttribute("data-bs-theme", theme);
+      const icon = document.getElementById("themeIcon");
+      if (theme === "dark") {
+        icon.className = "fa-solid fa-sun text-warning";
+      } else {
+        icon.className = "fa-solid fa-moon";
+      }
+      localStorage.setItem("sae_lab_theme", theme);
+      updateChartsTheme();
+    }
 
-      $(\'#resetFiltersBtn\').on(\'click\', function() {
-        $(\'#datasetFilter\').val(\'\');
-        $(\'#modelFilter\').val(\'\');
-        table.search(\'\').columns().search(\'\').draw();
-      });
+    // Toggle Theme
+    document.getElementById("themeToggleBtn").addEventListener("click", () => {
+      const active = document.documentElement.getAttribute("data-bs-theme");
+      applyTheme(active === "dark" ? "light" : "dark");
     });
 
-    function copyCode(id, btn) {
-      var el = document.getElementById(id);
-      var text = el.innerText || el.textContent;
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(function() {
-          showCopied(btn);
-        }).catch(function() {
-          fallbackCopy(text, btn);
+    // Language Toggle
+    function applyLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem("sae_lab_lang", lang);
+      document.getElementById("langText").innerText = lang === "id" ? "EN" : "ID";
+      document.title = translations[lang].page_title;
+
+      // Update text nodes with data-i18n
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (translations[lang] && translations[lang][key]) {
+          el.innerHTML = translations[lang][key];
+        }
+      });
+
+      // Update elements with data-en and data-id
+      document.querySelectorAll("[data-en][data-id]").forEach(el => {
+        el.innerHTML = (lang === "id") ? el.getAttribute("data-id") : el.getAttribute("data-en");
+      });
+
+      // Update Tab Names
+      document.querySelectorAll(".tab-name").forEach(el => {
+        el.innerText = (lang === "id") ? el.getAttribute("data-name-id") : el.getAttribute("data-name-en");
+      });
+
+      updateCharts();
+    }
+
+    document.getElementById("langToggleBtn").addEventListener("click", () => {
+      applyLanguage(currentLang === "id" ? "en" : "id");
+    });
+
+    // Colors mapping for packages
+    const packageColors = {
+      "fastsaegpu": "#8b5cf6",
+      "fastsae": "#2563eb",
+      "tipsae": "#0d9488",
+      "hbsae": "#4f46e5",
+      "sae": "#0284c7",
+      "saeRobust": "#d97706",
+      "survey": "#64748b"
+    };
+
+    // Chart.js instances
+    let scatterChart = null;
+    let barChart = null;
+
+    function getChartThemeColors() {
+      const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+      return {
+        gridColor: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)",
+        textColor: isDark ? "#9ca3af" : "#64748b",
+        baselineColor: isDark ? "rgba(239, 68, 68, 0.6)" : "rgba(239, 68, 68, 0.7)"
+      };
+    }
+
+    function initCharts() {
+      const tc = getChartThemeColors();
+
+      // Scatter Chart
+      const ctxScatter = document.getElementById("scatterChart").getContext("2d");
+      scatterChart = new Chart(ctxScatter, {
+        type: "scatter",
+        data: { datasets: [] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 400 },
+          scales: {
+            x: {
+              type: "logarithmic",
+              title: {
+                display: true,
+                text: currentLang === "id" ? "Waktu Eksekusi (detik, log scale)" : "Runtime (seconds, log scale)",
+                color: tc.textColor
+              },
+              grid: { color: tc.gridColor },
+              ticks: {
+                color: tc.textColor,
+                callback: function(val) {
+                  return val + "s";
+                }
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: currentLang === "id" ? "Efisiensi Relatif (%)" : "Relative Efficiency (%)",
+                color: tc.textColor
+              },
+              grid: { color: tc.gridColor },
+              ticks: { color: tc.textColor }
+            }
+          },
+          plugins: {
+            legend: {
+              position: "top",
+              labels: {
+                boxWidth: 10,
+                color: tc.textColor,
+                font: { size: 11 }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  const pt = ctx.raw;
+                  return [
+                    pt.model,
+                    (currentLang === "id" ? "Dataset: " : "Dataset: ") + pt.dsName,
+                    (currentLang === "id" ? "Efisiensi: " : "Rel. Efficiency: ") + pt.y.toFixed(1) + "%",
+                    "RRMSE: " + pt.rrmse.toFixed(2) + "%",
+                    (currentLang === "id" ? "Waktu: " : "Time: ") + pt.x.toFixed(2) + "s",
+                    "RAM: " + pt.ram.toFixed(1) + " MB"
+                  ];
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Bar Chart
+      const ctxBar = document.getElementById("barChart").getContext("2d");
+      barChart = new Chart(ctxBar, {
+        type: "bar",
+        data: { labels: [], datasets: [] },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 400 },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: currentLang === "id" ? "Efisiensi Relatif (%)" : "Relative Efficiency (%)",
+                color: tc.textColor
+              },
+              grid: { color: tc.gridColor },
+              ticks: { color: tc.textColor }
+            },
+            y: {
+              grid: { display: false },
+              ticks: { color: tc.textColor, font: { size: 10 } }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  return (currentLang === "id" ? "Efisiensi: " : "Efficiency: ") + ctx.raw.toFixed(1) + "%";
+                }
+              }
+            }
+          }
+        }
+      });
+
+      updateCharts();
+    }
+
+    function updateCharts() {
+      if (!scatterChart || !barChart) return;
+      const selectedDs = document.getElementById("chartDatasetSelect").value;
+      const tc = getChartThemeColors();
+
+      const filtered = (selectedDs === "ALL")
+        ? benchmarkData
+        : benchmarkData.filter(d => d.dataset_id === selectedDs);
+
+      const pkgGroups = {};
+      filtered.forEach(d => {
+        if (!pkgGroups[d.package]) pkgGroups[d.package] = [];
+        pkgGroups[d.package].push({
+          x: Math.max(0.005, d.Runtime),
+          y: d.RelEff,
+          model: d.model,
+          dsName: (currentLang === "id" ? d.dataset_name_id : d.dataset_name_en),
+          rrmse: d.RRMSE,
+          ram: d.RAM
         });
+      });
+
+      const scatterDatasets = Object.keys(pkgGroups).map(pkg => ({
+        label: pkg,
+        data: pkgGroups[pkg],
+        backgroundColor: packageColors[pkg] || "#64748b",
+        borderColor: packageColors[pkg] || "#64748b",
+        pointRadius: 6,
+        pointHoverRadius: 8
+      }));
+
+      scatterChart.data.datasets = scatterDatasets;
+      scatterChart.options.scales.x.title.text = currentLang === "id" ? "Waktu Eksekusi (detik, log scale)" : "Runtime (seconds, log scale)";
+      scatterChart.options.scales.y.title.text = currentLang === "id" ? "Efisiensi Relatif (%)" : "Relative Efficiency (%)";
+      scatterChart.update();
+
+      let barItems = [];
+      if (selectedDs === "ALL") {
+        const modelMap = {};
+        filtered.forEach(d => {
+          if (!modelMap[d.model]) modelMap[d.model] = { sum: 0, count: 0, pkg: d.package };
+          modelMap[d.model].sum += d.RelEff;
+          modelMap[d.model].count += 1;
+        });
+        barItems = Object.keys(modelMap).map(m => ({
+          model: m,
+          eff: modelMap[m].sum / modelMap[m].count,
+          pkg: modelMap[m].pkg
+        })).sort((a, b) => b.eff - a.eff);
       } else {
-        fallbackCopy(text, btn);
+        barItems = filtered.map(d => ({
+          model: d.model,
+          eff: d.RelEff,
+          pkg: d.package
+        })).sort((a, b) => b.eff - a.eff);
       }
+
+      barChart.data.labels = barItems.map(d => d.model.replace(/ \\(.+\\)/, ""));
+      barChart.data.datasets = [{
+        label: "RelEff",
+        data: barItems.map(d => d.eff),
+        backgroundColor: barItems.map(d => (packageColors[d.pkg] || "#64748b") + "cc"),
+        borderColor: barItems.map(d => packageColors[d.pkg] || "#64748b"),
+        borderWidth: 1,
+        borderRadius: 4
+      }];
+      barChart.options.scales.x.title.text = currentLang === "id" ? "Efisiensi Relatif (%)" : "Relative Efficiency (%)";
+      barChart.update();
     }
 
-    function showCopied(btn) {
-      if (!btn) return;
-      var origHtml = btn.innerHTML;
-      btn.innerHTML = \'<i class="fa-solid fa-check text-success me-1"></i> Copied!\';
-      btn.classList.add(\'btn-success\');
-      btn.classList.remove(\'btn-outline-secondary\');
-      setTimeout(function() {
-        btn.innerHTML = origHtml;
-        btn.classList.remove(\'btn-success\');
-        btn.classList.add(\'btn-outline-secondary\');
-      }, 2000);
+    function updateChartsTheme() {
+      if (!scatterChart || !barChart) return;
+      const tc = getChartThemeColors();
+      
+      scatterChart.options.scales.x.grid.color = tc.gridColor;
+      scatterChart.options.scales.x.ticks.color = tc.textColor;
+      scatterChart.options.scales.y.grid.color = tc.gridColor;
+      scatterChart.options.scales.y.ticks.color = tc.textColor;
+      scatterChart.options.plugins.legend.labels.color = tc.textColor;
+      scatterChart.update();
+
+      barChart.options.scales.x.grid.color = tc.gridColor;
+      barChart.options.scales.x.ticks.color = tc.textColor;
+      barChart.options.scales.y.ticks.color = tc.textColor;
+      barChart.update();
     }
 
-    function fallbackCopy(text, btn) {
-      var textArea = document.createElement("textarea");
-      textArea.value = text;
-      textArea.style.position = "fixed";
-      textArea.style.left = "-999999px";
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      try {
-        document.execCommand("copy");
-        showCopied(btn);
-      } catch (err) {
-        console.error("Fallback copy failed", err);
-      }
-      document.body.removeChild(textArea);
-    }
+    document.getElementById("chartDatasetSelect").addEventListener("change", updateCharts);
+
+    // Initialize Page
+    document.addEventListener("DOMContentLoaded", () => {
+      applyTheme(currentTheme);
+      applyLanguage(currentLang);
+      initCharts();
+    });
   </script>
 </body>
 </html>'
 
-  render_page <- function(is_docs = TRUE) {
-    plots_path <- if (is_docs) "plots" else "docs/plots"
-    
-    html <- base_template
-    html <- gsub("{{TOTAL_MODELS}}", as.character(total_models), html, fixed = TRUE)
-    html <- gsub("{{TOTAL_DATASETS}}", as.character(total_datasets), html, fixed = TRUE)
-    html <- gsub("{{TOP_EFF_VAL}}", top_eff_val, html, fixed = TRUE)
-    html <- gsub("{{TOP_EFF_DETAIL}}", top_eff_detail, html, fixed = TRUE)
-    html <- gsub("{{FASTEST_MODEL}}", fastest_model_name, html, fixed = TRUE)
-    html <- gsub("{{FASTEST_TIME}}", fastest_model_time, html, fixed = TRUE)
-    html <- gsub("{{LOWEST_RAM_MODEL}}", lowest_ram_model, html, fixed = TRUE)
-    html <- gsub("{{LOWEST_RAM_VAL}}", lowest_ram_val, html, fixed = TRUE)
-    html <- gsub("{{TABLE_ROWS}}", table_rows_html, html, fixed = TRUE)
-    html <- gsub("{{PLOTS_PATH}}", plots_path, html, fixed = TRUE)
-    html <- gsub("{{CATALOGUE_CARDS}}", catalogue_cards_html, html, fixed = TRUE)
-    html <- gsub("{{TIMESTAMP}}", timestamp_str, html, fixed = TRUE)
-    
-    return(html)
-  }
+  # Substitute template variables
+  html <- html_template
+  html <- gsub("{{TOTAL_MODELS}}", as.character(total_models), html, fixed = TRUE)
+  html <- gsub("{{TOTAL_DATASETS}}", as.character(total_datasets), html, fixed = TRUE)
+  html <- gsub("{{TOP_EFF_VAL}}", top_eff_val, html, fixed = TRUE)
+  html <- gsub("{{TOP_EFF_MODEL}}", top_eff_model, html, fixed = TRUE)
+  html <- gsub("{{TOP_EFF_DS}}", top_eff_ds, html, fixed = TRUE)
+  html <- gsub("{{FASTEST_MODEL}}", fastest_model_name, html, fixed = TRUE)
+  html <- gsub("{{FASTEST_TIME}}", fastest_model_time, html, fixed = TRUE)
+  html <- gsub("{{LOWEST_RAM_MODEL}}", lowest_ram_model, html, fixed = TRUE)
+  html <- gsub("{{LOWEST_RAM_VAL}}", lowest_ram_val, html, fixed = TRUE)
+  html <- gsub("{{DS_OPTIONS}}", paste(ds_options, collapse = "\n"), html, fixed = TRUE)
+  html <- gsub("{{TABS_NAV}}", paste(tabs_nav, collapse = "\n"), html, fixed = TRUE)
+  html <- gsub("{{TAB_PANES}}", paste(tab_panes, collapse = "\n"), html, fixed = TRUE)
+  html <- gsub("{{TIMESTAMP}}", timestamp_str, html, fixed = TRUE)
+  html <- gsub("{{CHART_JSON}}", chart_json_str, html, fixed = TRUE)
   
-  # Write docs/index.html
-  docs_html <- render_page(is_docs = TRUE)
+  # Write output
   docs_index_path <- file.path(docs_dir, "index.html")
-  writeLines(docs_html, docs_index_path)
-  cat(sprintf("[+] Successfully generated: %s\n", docs_index_path))
-  
-  # Write index.html at root
-  root_html <- render_page(is_docs = FALSE)
   root_index_path <- file.path(root_dir, "index.html")
-  writeLines(root_html, root_index_path)
-  cat(sprintf("[+] Successfully generated: %s\n", root_index_path))
   
+  writeLines(html, docs_index_path)
+  writeLines(html, root_index_path)
+  
+  cat(sprintf("[+] Successfully generated: %s\n", docs_index_path))
+  cat(sprintf("[+] Successfully generated: %s\n", root_index_path))
   return(invisible(TRUE))
 }
 

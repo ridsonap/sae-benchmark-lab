@@ -1,133 +1,222 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="id" data-bs-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SAE Benchmark Lab | Official BPS Two-Stage Sampling Testbed</title>
+  <title>SAE Benchmark Lab | Evaluasi Model Small Area Estimation</title>
   
   <!-- CSS Frameworks -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/2.0.2/css/dataTables.bootstrap5.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 
   <style>
     :root {
       --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --font-mono: "JetBrains Mono", monospace;
-      --card-bg: #121826;
-      --border-color: #242f49;
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --border-subtle: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --best-bg: #ecfdf5;
+      --best-text: #047857;
+      --best-border: #a7f3d0;
     }
+
+    [data-bs-theme="dark"] {
+      --bg-page: #090d16;
+      --bg-card: #111827;
+      --border-subtle: #1f2937;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --best-bg: rgba(16, 185, 129, 0.16);
+      --best-text: #6ee7b7;
+      --best-border: rgba(16, 185, 129, 0.4);
+    }
+
     body {
       font-family: var(--font-sans);
-      background-color: #0b0f19;
-      color: #e2e8f0;
+      background-color: var(--bg-page);
+      color: var(--text-main);
       min-height: 100vh;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
+
     .font-monospace {
       font-family: var(--font-mono) !important;
     }
+
     .navbar {
-      background-color: rgba(11, 15, 25, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border-color);
+      background-color: var(--bg-card);
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background-color 0.2s ease, border-color 0.2s ease;
     }
+
     .hero-section {
-      background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-      padding: 3.5rem 0 2rem;
-      border-bottom: 1px solid rgba(36, 47, 73, 0.4);
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid var(--border-subtle);
+      background: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.05) 0%, transparent 65%);
     }
+
     .kpi-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      transition: transform 0.2s ease, border-color 0.2s ease;
-      position: relative;
-      overflow: hidden;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     }
     .kpi-card:hover {
       transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
       border-color: #3b82f6;
     }
-    .kpi-card::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-    }
-    .archetype-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
+
+    .dataset-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
       border-radius: 12px;
-      transition: transform 0.2s ease, border-color 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
     }
-    .archetype-card:hover {
-      transform: translateY(-3px);
-      border-color: #6366f1;
-    }
-    .table-container {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 14px;
-      padding: 1.5rem;
-    }
-    table.dataTable {
-      border-collapse: separate !important;
-      border-spacing: 0;
-    }
-    .text-purple { color: #a855f7 !important; }
-    .bg-purple-subtle { background-color: rgba(168, 85, 247, 0.15) !important; }
-    .text-emerald { color: #10b981 !important; }
-    .bg-emerald-subtle { background-color: rgba(16, 185, 129, 0.15) !important; }
-    .code-box {
-      background-color: #050811;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 1rem 1.25rem;
-      position: relative;
-    }
-    .copy-btn {
-      position: absolute;
-      top: 0.75rem;
-      right: 0.75rem;
-      font-size: 0.75rem;
-    }
+
     .nav-pills .nav-link {
-      color: #94a3b8;
+      color: var(--text-muted);
       border-radius: 8px;
-      padding: 0.5rem 1rem;
-      font-weight: 500;
+      padding: 0.5rem 0.9rem;
+      font-size: 0.875rem;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .nav-pills .nav-link:hover {
+      background-color: rgba(59, 130, 246, 0.08);
+      color: #2563eb;
     }
     .nav-pills .nav-link.active {
-      background-color: #3b82f6;
-      color: #ffffff;
+      background-color: #2563eb;
+      color: #ffffff !important;
     }
-    .scheme-step {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
+    .nav-pills .nav-link.active .tab-name {
+      color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    .benchmark-table {
+      font-size: 0.875rem;
+    }
+    .benchmark-table th {
+      background-color: rgba(148, 163, 184, 0.05);
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      padding: 0.75rem 1rem;
+    }
+    .benchmark-table td {
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.75rem 1rem;
+    }
+    .benchmark-table tbody tr:hover td {
+      background-color: rgba(59, 130, 246, 0.04);
+    }
+
+    /* Cell best styling */
+    .best-cell {
+      background-color: var(--best-bg) !important;
+      color: var(--best-text) !important;
+      font-weight: 700 !important;
+      border-radius: 4px;
+    }
+
+    /* Rank badges */
+    .rank-badge {
+      display: inline-block;
+      min-width: 28px;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 6px;
+      margin-right: 6px;
+    }
+    .rank-1 { background-color: rgba(234, 179, 8, 0.15); color: #ca8a04; border: 1px solid rgba(234, 179, 8, 0.3); }
+    .rank-2 { background-color: rgba(148, 163, 184, 0.15); color: #64748b; border: 1px solid rgba(148, 163, 184, 0.3); }
+    .rank-3 { background-color: rgba(217, 119, 6, 0.15); color: #b45309; border: 1px solid rgba(217, 119, 6, 0.3); }
+    .rank-n { background-color: transparent; color: var(--text-muted); }
+
+    /* Package Badges */
+    .pkg-badge {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      display: inline-block;
+    }
+    .badge-purple { background-color: rgba(168, 85, 247, 0.12); color: #9333ea; border-color: rgba(168, 85, 247, 0.25); }
+    .badge-blue { background-color: rgba(59, 130, 246, 0.12); color: #2563eb; border-color: rgba(59, 130, 246, 0.25); }
+    .badge-teal { background-color: rgba(20, 184, 166, 0.12); color: #0d9488; border-color: rgba(20, 184, 166, 0.25); }
+    .badge-indigo { background-color: rgba(99, 102, 241, 0.12); color: #4f46e5; border-color: rgba(99, 102, 241, 0.25); }
+    .badge-sky { background-color: rgba(2, 132, 199, 0.12); color: #0284c7; border-color: rgba(2, 132, 199, 0.25); }
+    .badge-amber { background-color: rgba(245, 158, 11, 0.12); color: #d97706; border-color: rgba(245, 158, 11, 0.25); }
+    .badge-gray { background-color: rgba(148, 163, 184, 0.12); color: #475569; border-color: rgba(148, 163, 184, 0.25); }
+
+    [data-bs-theme="dark"] .badge-purple { color: #c084fc; border-color: rgba(168, 85, 247, 0.35); }
+    [data-bs-theme="dark"] .badge-blue { color: #60a5fa; border-color: rgba(59, 130, 246, 0.35); }
+    [data-bs-theme="dark"] .badge-teal { color: #2dd4bf; border-color: rgba(20, 184, 166, 0.35); }
+    [data-bs-theme="dark"] .badge-indigo { color: #818cf8; border-color: rgba(99, 102, 241, 0.35); }
+    [data-bs-theme="dark"] .badge-sky { color: #38bdf8; border-color: rgba(2, 132, 199, 0.35); }
+    [data-bs-theme="dark"] .badge-amber { color: #fbbf24; border-color: rgba(245, 158, 11, 0.35); }
+    [data-bs-theme="dark"] .badge-gray { color: #94a3b8; border-color: rgba(148, 163, 184, 0.35); }
+
+    .chart-container-box {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.25rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      height: 100%;
+    }
+
+    .methodology-box {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
       border-radius: 12px;
       padding: 1.5rem;
-      height: 100%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
   </style>
 </head>
 <body>
 
   <!-- Navigation -->
-  <nav class="navbar navbar-expand-lg sticky-top">
+  <nav class="navbar navbar-expand-lg sticky-top py-2">
     <div class="container-xl">
-      <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-white" href="#">
-        <i class="fa-solid fa-chart-pie text-primary fs-4"></i>
-        <span>SAE Benchmark Lab</span>
+      <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-decoration-none" href="#">
+        <i class="fa-solid fa-chart-line text-primary fs-4"></i>
+        <span class="text-body fw-bold fs-5">SAE Benchmark Lab</span>
       </a>
-      <div class="d-flex align-items-center gap-3">
-        <a href="https://github.com/ridsonap/sae-benchmark-lab" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-          <i class="fa-brands fa-github me-1"></i> GitHub Repo
+
+      <div class="d-flex align-items-center gap-2">
+        <!-- Language Switcher Button -->
+        <button id="langToggleBtn" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-flex align-items-center gap-1" title="Ganti Bahasa / Switch Language">
+          <i class="fa-solid fa-globe"></i>
+          <span id="langText" class="fw-semibold font-monospace">EN</span>
+        </button>
+
+        <!-- Dark / Light Theme Toggle -->
+        <button id="themeToggleBtn" class="btn btn-outline-secondary btn-sm rounded-circle p-2" style="width: 34px; height: 34px;" title="Mode Gelap/Terang">
+          <i id="themeIcon" class="fa-solid fa-moon"></i>
+        </button>
+
+        <a href="https://github.com/ridsonap/sae-benchmark-lab" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-none d-sm-inline-flex align-items-center gap-1">
+          <i class="fa-brands fa-github"></i>
+          <span>GitHub</span>
         </a>
       </div>
     </div>
@@ -136,58 +225,57 @@
   <!-- Hero Header -->
   <section class="hero-section text-center">
     <div class="container-xl">
-      <div class="d-flex justify-content-center gap-2 mb-3 flex-wrap">
+      <div class="d-flex justify-content-center gap-2 mb-2 flex-wrap">
         <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">
-          <i class="fa-solid fa-check-double me-1"></i> Official BPS Susenas Design
+          <i class="fa-solid fa-layer-group me-1"></i> 8 Dataset Archetypes
         </span>
         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
-          <i class="fa-solid fa-database me-1"></i> Exact Finite Population Ground Truth
+          <i class="fa-solid fa-bullseye me-1"></i> Exact Ground Truth
         </span>
         <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-1">
-          <i class="fa-solid fa-microchip me-1"></i> RAM & Latency Profiling
+          <i class="fa-solid fa-microchip me-1"></i> Profiling Waktu & RAM
         </span>
       </div>
-      <h1 class="display-5 fw-extrabold text-white mb-2">SAE Benchmark Lab</h1>
-      <p class="h5 fw-medium text-info mb-3">Official BPS Two-Stage Stratified Cluster Sampling Testbed</p>
-      <p class="lead text-secondary mx-auto mb-4" style="max-width: 820px;">
-        Standardized, reproducible testbed for evaluating <strong>Small Area Estimation (SAE)</strong> models under 
-        two-stage stratified cluster sampling against exact finite-population Ground Truth.
+
+      <h1 class="display-6 fw-bold mb-2">SAE Benchmark Lab</h1>
+      <p class="lead text-muted mx-auto mb-4" style="max-width: 760px;" data-i18n="hero_subtitle">
+        Tolok ukur terstandar evaluasi model Small Area Estimation (SAE) terhadap Ground Truth populasi murni dengan metrik akurasi, efisiensi relatif, dan latensi komputasi.
       </p>
-      
-      <!-- KPI Cards -->
-      <div class="row g-3 justify-content-center text-start mt-2">
-        <div class="col-6 col-md-4 col-lg-2">
-          <div class="card kpi-card p-3">
-            <span class="text-secondary small fw-medium text-uppercase">Total Models</span>
-            <div class="fs-3 fw-bold text-white mt-1">5</div>
-            <span class="text-muted small">Standard Battery</span>
+
+      <!-- KPI Summary Cards -->
+      <div class="row g-3 justify-content-center text-start">
+        <div class="col-6 col-md-3 col-lg-2">
+          <div class="kpi-card p-3">
+            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_total_models">Total Model</span>
+            <div class="fs-4 fw-bold text-body mt-1">10</div>
+            <span class="text-muted small">Standard & Robust</span>
           </div>
         </div>
-        <div class="col-6 col-md-4 col-lg-2">
-          <div class="card kpi-card p-3">
-            <span class="text-secondary small fw-medium text-uppercase">8 Dataset Archetypes</span>
-            <div class="fs-3 fw-bold text-white mt-1">8</div>
-            <span class="text-muted small">Structural Challenges</span>
+        <div class="col-6 col-md-3 col-lg-2">
+          <div class="kpi-card p-3">
+            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_datasets">Arketipe Data</span>
+            <div class="fs-4 fw-bold text-body mt-1">8</div>
+            <span class="text-muted small">Tantangan SAE</span>
           </div>
         </div>
-        <div class="col-6 col-md-4 col-lg-3">
-          <div class="card kpi-card p-3">
-            <span class="text-secondary small fw-medium text-uppercase">Top RelEff Gain</span>
-            <div class="fs-3 fw-bold text-success mt-1">123.4%</div>
-            <span class="text-muted small text-truncate d-block">fastsaegpu_HB on ds05_spatial_correlated</span>
+        <div class="col-6 col-md-3 col-lg-3">
+          <div class="kpi-card p-3">
+            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_top_gain">Efisiensi Maksimal</span>
+            <div class="fs-4 fw-bold text-success mt-1">156.6%</div>
+            <span class="text-muted small text-truncate d-block">tipsae (fit_sae, Beta Stan HMC) (Tingkat Bounded (0,1))</span>
           </div>
         </div>
-        <div class="col-6 col-md-4 col-lg-2">
-          <div class="card kpi-card p-3">
-            <span class="text-secondary small fw-medium text-uppercase">Fastest Model</span>
-            <div class="fs-3 fw-bold text-info mt-1">fastsae_EBLUP</div>
+        <div class="col-6 col-md-3 col-lg-3">
+          <div class="kpi-card p-3">
+            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_fastest">Model Tercepat</span>
+            <div class="fs-4 fw-bold text-primary mt-1 text-truncate">fastsae (eblup_fh, REML)</div>
             <span class="text-muted small">0.00s avg</span>
           </div>
         </div>
-        <div class="col-6 col-md-4 col-lg-3">
-          <div class="card kpi-card p-3">
-            <span class="text-secondary small fw-medium text-uppercase">Lowest Memory</span>
-            <div class="fs-3 fw-bold text-purple mt-1">fastsae_EBLUP</div>
+        <div class="col-6 col-md-3 col-lg-2">
+          <div class="kpi-card p-3">
+            <span class="text-muted small fw-medium text-uppercase" data-i18n="kpi_lowest_ram">Hemat Memori</span>
+            <div class="fs-4 fw-bold text-info mt-1 text-truncate">fastsae (eblup_fh, REML)</div>
             <span class="text-muted small">1.1 MB avg</span>
           </div>
         </div>
@@ -196,350 +284,800 @@
   </section>
 
   <!-- Main Content -->
-  <main class="container-xl py-5">
+  <main class="container-xl py-4">
 
-    <!-- Interactive Leaderboard Table Section -->
-    <div class="mb-5">
-      <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-3">
-        <div>
-          <h2 class="h3 fw-bold text-white mb-1"><i class="fa-solid fa-trophy text-warning me-2"></i>Master Leaderboard</h2>
-          <p class="text-secondary small mb-0">Empirical metrics evaluated across finite-population ground truth</p>
-        </div>
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-          <div class="d-flex align-items-center gap-1">
-            <label for="datasetFilter" class="text-secondary small text-nowrap"><i class="fa-solid fa-filter me-1"></i>Dataset:</label>
-            <select id="datasetFilter" class="form-select form-select-sm bg-dark text-light border-secondary">
-              <option value="">All Datasets</option>
-              <option value="ds01_continuous_linear">ds01: Continuous Linear</option>
-              <option value="ds02_bounded_rate">ds02: Bounded Rate</option>
-              <option value="ds03_highdim_sparse">ds03: High-Dim Sparse</option>
-              <option value="ds04_nonlinear_interaction">ds04: Nonlinear & Inter.</option>
-              <option value="ds05_spatial_correlated">ds05: Spatial Correlated</option>
-              <option value="ds06_spatiotemporal_panel">ds06: Spatio-Temporal Panel</option>
-              <option value="ds07_extreme_outliers">ds07: Extreme Outliers</option>
-              <option value="ds08_nested_subarea">ds08: Nested Subarea</option>
-            </select>
-          </div>
-          <div class="d-flex align-items-center gap-1">
-            <label for="modelFilter" class="text-secondary small text-nowrap"><i class="fa-solid fa-cube me-1"></i>Model:</label>
-            <select id="modelFilter" class="form-select form-select-sm bg-dark text-light border-secondary">
-              <option value="">All Models</option>
-              <option value="Direct">Direct</option>
-              <option value="fastsaegpu_HB">fastsaegpu_HB</option>
-              <option value="Enhanced_MERF">Enhanced_MERF</option>
-              <option value="fastsae_EBLUP">fastsae_EBLUP</option>
-              <option value="fastsae_INLA">fastsae_INLA</option>
-            </select>
-          </div>
-          <button id="resetFiltersBtn" class="btn btn-outline-secondary btn-sm">
-            <i class="fa-solid fa-filter-circle-xmark me-1"></i> Reset
-          </button>
-        </div>
-      </div>
-
-      <div class="table-container shadow-sm">
-        <div class="table-responsive">
-          <table id="leaderboardTable" class="table table-hover align-middle mb-0" style="width: 100%;">
-            <thead>
-              <tr class="text-secondary small text-uppercase">
-                <th>Dataset</th>
-                <th>Model</th>
-                <th class="text-end">RRMSE (%)</th>
-                <th class="text-end">ARB (%)</th>
-                <th class="text-center">Rel. Efficiency (%)</th>
-                <th class="text-end">Corr</th>
-                <th class="text-end">Peak RAM (MB)</th>
-                <th class="text-end">Runtime (s)</th>
-              </tr>
-            </thead>
-            <tbody>
-<tr><td data-order="ds01_continuous_linear" data-search="ds01_continuous_linear Continuous Linear (Baseline Fay-Herriot)"><strong>Continuous Linear (Baseline Fay-Herriot)</strong><br><small class="text-muted font-monospace">ds01_continuous_linear</small></td><td data-order="Direct" data-search="Direct"><span class="badge bg-secondary-subtle text-secondary fw-semibold"><i class="fa-solid fa-scale-balanced me-1"></i>Direct</span></td><td class="text-end fw-semibold" data-order="0.41">0.41%</td><td class="text-end" data-order="0.32">0.32%</td><td class="text-center" data-order="100"><span class="badge bg-secondary-subtle text-secondary fw-semibold">100.0%</span></td><td class="text-end" data-order="0.9897">0.9897</td><td class="text-end font-monospace" data-order="0">0.0 MB</td><td class="text-end font-monospace" data-order="0">0.00s</td></tr>
-<tr><td data-order="ds01_continuous_linear" data-search="ds01_continuous_linear Continuous Linear (Baseline Fay-Herriot)"><strong>Continuous Linear (Baseline Fay-Herriot)</strong><br><small class="text-muted font-monospace">ds01_continuous_linear</small></td><td data-order="fastsaegpu_HB" data-search="fastsaegpu_HB"><span class="badge bg-purple-subtle text-purple fw-semibold"><i class="fa-solid fa-bolt me-1"></i>fastsaegpu_HB</span></td><td class="text-end fw-semibold" data-order="0.38">0.38%</td><td class="text-end" data-order="0.31">0.31%</td><td class="text-center" data-order="110.9"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>110.9%</span></td><td class="text-end" data-order="0.9906">0.9906</td><td class="text-end font-monospace" data-order="160">160.0 MB</td><td class="text-end font-monospace" data-order="14.04">14.04s</td></tr>
-<tr><td data-order="ds01_continuous_linear" data-search="ds01_continuous_linear Continuous Linear (Baseline Fay-Herriot)"><strong>Continuous Linear (Baseline Fay-Herriot)</strong><br><small class="text-muted font-monospace">ds01_continuous_linear</small></td><td data-order="Enhanced_MERF" data-search="Enhanced_MERF"><span class="badge bg-emerald-subtle text-emerald fw-semibold"><i class="fa-solid fa-tree me-1"></i>Enhanced_MERF</span></td><td class="text-end fw-semibold" data-order="0.4">0.40%</td><td class="text-end" data-order="0.32">0.32%</td><td class="text-center" data-order="101.9"><span class="badge bg-secondary-subtle text-secondary fw-semibold">101.9%</span></td><td class="text-end" data-order="0.9898">0.9898</td><td class="text-end font-monospace" data-order="44.6">44.6 MB</td><td class="text-end font-monospace" data-order="0.36">0.36s</td></tr>
-<tr><td data-order="ds01_continuous_linear" data-search="ds01_continuous_linear Continuous Linear (Baseline Fay-Herriot)"><strong>Continuous Linear (Baseline Fay-Herriot)</strong><br><small class="text-muted font-monospace">ds01_continuous_linear</small></td><td data-order="fastsae_EBLUP" data-search="fastsae_EBLUP"><span class="badge bg-primary-subtle text-primary fw-semibold"><i class="fa-solid fa-chart-line me-1"></i>fastsae_EBLUP</span></td><td class="text-end fw-semibold" data-order="0.38">0.38%</td><td class="text-end" data-order="0.31">0.31%</td><td class="text-center" data-order="111.3"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>111.3%</span></td><td class="text-end" data-order="0.9906">0.9906</td><td class="text-end font-monospace" data-order="2">2.0 MB</td><td class="text-end font-monospace" data-order="0.02">0.02s</td></tr>
-<tr><td data-order="ds01_continuous_linear" data-search="ds01_continuous_linear Continuous Linear (Baseline Fay-Herriot)"><strong>Continuous Linear (Baseline Fay-Herriot)</strong><br><small class="text-muted font-monospace">ds01_continuous_linear</small></td><td data-order="fastsae_INLA" data-search="fastsae_INLA"><span class="badge bg-warning-subtle text-warning-emphasis fw-semibold"><i class="fa-solid fa-fire me-1"></i>fastsae_INLA</span></td><td class="text-end fw-semibold" data-order="0.38">0.38%</td><td class="text-end" data-order="0.31">0.31%</td><td class="text-center" data-order="111.3"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>111.3%</span></td><td class="text-end" data-order="0.9906">0.9906</td><td class="text-end font-monospace" data-order="136.8">136.8 MB</td><td class="text-end font-monospace" data-order="1.92">1.92s</td></tr>
-<tr><td data-order="ds02_bounded_rate" data-search="ds02_bounded_rate Bounded Rate (Poverty / Prevalence Rate)"><strong>Bounded Rate (Poverty / Prevalence Rate)</strong><br><small class="text-muted font-monospace">ds02_bounded_rate</small></td><td data-order="Direct" data-search="Direct"><span class="badge bg-secondary-subtle text-secondary fw-semibold"><i class="fa-solid fa-scale-balanced me-1"></i>Direct</span></td><td class="text-end fw-semibold" data-order="36.16">36.16%</td><td class="text-end" data-order="24.67">24.67%</td><td class="text-center" data-order="100"><span class="badge bg-secondary-subtle text-secondary fw-semibold">100.0%</span></td><td class="text-end" data-order="0.9192">0.9192</td><td class="text-end font-monospace" data-order="0.5">0.5 MB</td><td class="text-end font-monospace" data-order="0">0.00s</td></tr>
-<tr><td data-order="ds02_bounded_rate" data-search="ds02_bounded_rate Bounded Rate (Poverty / Prevalence Rate)"><strong>Bounded Rate (Poverty / Prevalence Rate)</strong><br><small class="text-muted font-monospace">ds02_bounded_rate</small></td><td data-order="fastsaegpu_HB" data-search="fastsaegpu_HB"><span class="badge bg-purple-subtle text-purple fw-semibold"><i class="fa-solid fa-bolt me-1"></i>fastsaegpu_HB</span></td><td class="text-end fw-semibold" data-order="29.15">29.15%</td><td class="text-end" data-order="20.63">20.63%</td><td class="text-center" data-order="117.5"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>117.5%</span></td><td class="text-end" data-order="0.9126">0.9126</td><td class="text-end font-monospace" data-order="39.2">39.2 MB</td><td class="text-end font-monospace" data-order="6.41">6.41s</td></tr>
-<tr><td data-order="ds02_bounded_rate" data-search="ds02_bounded_rate Bounded Rate (Poverty / Prevalence Rate)"><strong>Bounded Rate (Poverty / Prevalence Rate)</strong><br><small class="text-muted font-monospace">ds02_bounded_rate</small></td><td data-order="Enhanced_MERF" data-search="Enhanced_MERF"><span class="badge bg-emerald-subtle text-emerald fw-semibold"><i class="fa-solid fa-tree me-1"></i>Enhanced_MERF</span></td><td class="text-end fw-semibold" data-order="34.91">34.91%</td><td class="text-end" data-order="23.62">23.62%</td><td class="text-center" data-order="119.6"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>119.6%</span></td><td class="text-end" data-order="0.9173">0.9173</td><td class="text-end font-monospace" data-order="41">41.0 MB</td><td class="text-end font-monospace" data-order="0.32">0.32s</td></tr>
-<tr><td data-order="ds02_bounded_rate" data-search="ds02_bounded_rate Bounded Rate (Poverty / Prevalence Rate)"><strong>Bounded Rate (Poverty / Prevalence Rate)</strong><br><small class="text-muted font-monospace">ds02_bounded_rate</small></td><td data-order="fastsae_EBLUP" data-search="fastsae_EBLUP"><span class="badge bg-primary-subtle text-primary fw-semibold"><i class="fa-solid fa-chart-line me-1"></i>fastsae_EBLUP</span></td><td class="text-end fw-semibold" data-order="29.15">29.15%</td><td class="text-end" data-order="20.71">20.71%</td><td class="text-center" data-order="118.1"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>118.1%</span></td><td class="text-end" data-order="0.913">0.9130</td><td class="text-end font-monospace" data-order="3.6">3.6 MB</td><td class="text-end font-monospace" data-order="0">0.00s</td></tr>
-<tr><td data-order="ds02_bounded_rate" data-search="ds02_bounded_rate Bounded Rate (Poverty / Prevalence Rate)"><strong>Bounded Rate (Poverty / Prevalence Rate)</strong><br><small class="text-muted font-monospace">ds02_bounded_rate</small></td><td data-order="fastsae_INLA" data-search="fastsae_INLA"><span class="badge bg-warning-subtle text-warning-emphasis fw-semibold"><i class="fa-solid fa-fire me-1"></i>fastsae_INLA</span></td><td class="text-end fw-semibold" data-order="29.2">29.20%</td><td class="text-end" data-order="20.7">20.70%</td><td class="text-center" data-order="119.3"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>119.3%</span></td><td class="text-end" data-order="0.9139">0.9139</td><td class="text-end font-monospace" data-order="51">51.0 MB</td><td class="text-end font-monospace" data-order="1.22">1.22s</td></tr>
-<tr><td data-order="ds03_highdim_sparse" data-search="ds03_highdim_sparse High-Dimensional Sparse (Podes / Satellite Features)"><strong>High-Dimensional Sparse (Podes / Satellite Features)</strong><br><small class="text-muted font-monospace">ds03_highdim_sparse</small></td><td data-order="Direct" data-search="Direct"><span class="badge bg-secondary-subtle text-secondary fw-semibold"><i class="fa-solid fa-scale-balanced me-1"></i>Direct</span></td><td class="text-end fw-semibold" data-order="0.56">0.56%</td><td class="text-end" data-order="0.46">0.46%</td><td class="text-center" data-order="100"><span class="badge bg-secondary-subtle text-secondary fw-semibold">100.0%</span></td><td class="text-end" data-order="0.9982">0.9982</td><td class="text-end font-monospace" data-order="0">0.0 MB</td><td class="text-end font-monospace" data-order="0">0.00s</td></tr>
-<tr><td data-order="ds03_highdim_sparse" data-search="ds03_highdim_sparse High-Dimensional Sparse (Podes / Satellite Features)"><strong>High-Dimensional Sparse (Podes / Satellite Features)</strong><br><small class="text-muted font-monospace">ds03_highdim_sparse</small></td><td data-order="fastsaegpu_HB" data-search="fastsaegpu_HB"><span class="badge bg-purple-subtle text-purple fw-semibold"><i class="fa-solid fa-bolt me-1"></i>fastsaegpu_HB</span></td><td class="text-end fw-semibold" data-order="0.53">0.53%</td><td class="text-end" data-order="0.43">0.43%</td><td class="text-center" data-order="110.6"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>110.6%</span></td><td class="text-end" data-order="0.9984">0.9984</td><td class="text-end font-monospace" data-order="29.2">29.2 MB</td><td class="text-end font-monospace" data-order="9.52">9.52s</td></tr>
-<tr><td data-order="ds03_highdim_sparse" data-search="ds03_highdim_sparse High-Dimensional Sparse (Podes / Satellite Features)"><strong>High-Dimensional Sparse (Podes / Satellite Features)</strong><br><small class="text-muted font-monospace">ds03_highdim_sparse</small></td><td data-order="Enhanced_MERF" data-search="Enhanced_MERF"><span class="badge bg-emerald-subtle text-emerald fw-semibold"><i class="fa-solid fa-tree me-1"></i>Enhanced_MERF</span></td><td class="text-end fw-semibold" data-order="0.56">0.56%</td><td class="text-end" data-order="0.46">0.46%</td><td class="text-center" data-order="99.7"><span class="badge bg-secondary-subtle text-secondary fw-semibold">99.7%</span></td><td class="text-end" data-order="0.9982">0.9982</td><td class="text-end font-monospace" data-order="21.9">21.9 MB</td><td class="text-end font-monospace" data-order="0.23">0.23s</td></tr>
-<tr><td data-order="ds03_highdim_sparse" data-search="ds03_highdim_sparse High-Dimensional Sparse (Podes / Satellite Features)"><strong>High-Dimensional Sparse (Podes / Satellite Features)</strong><br><small class="text-muted font-monospace">ds03_highdim_sparse</small></td><td data-order="fastsae_EBLUP" data-search="fastsae_EBLUP"><span class="badge bg-primary-subtle text-primary fw-semibold"><i class="fa-solid fa-chart-line me-1"></i>fastsae_EBLUP</span></td><td class="text-end fw-semibold" data-order="0.53">0.53%</td><td class="text-end" data-order="0.43">0.43%</td><td class="text-center" data-order="111.1"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>111.1%</span></td><td class="text-end" data-order="0.9984">0.9984</td><td class="text-end font-monospace" data-order="1">1.0 MB</td><td class="text-end font-monospace" data-order="0">0.00s</td></tr>
-<tr><td data-order="ds03_highdim_sparse" data-search="ds03_highdim_sparse High-Dimensional Sparse (Podes / Satellite Features)"><strong>High-Dimensional Sparse (Podes / Satellite Features)</strong><br><small class="text-muted font-monospace">ds03_highdim_sparse</small></td><td data-order="fastsae_INLA" data-search="fastsae_INLA"><span class="badge bg-warning-subtle text-warning-emphasis fw-semibold"><i class="fa-solid fa-fire me-1"></i>fastsae_INLA</span></td><td class="text-end fw-semibold" data-order="0.53">0.53%</td><td class="text-end" data-order="0.43">0.43%</td><td class="text-center" data-order="111.1"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>111.1%</span></td><td class="text-end" data-order="0.9984">0.9984</td><td class="text-end font-monospace" data-order="60.5">60.5 MB</td><td class="text-end font-monospace" data-order="1.28">1.28s</td></tr>
-<tr><td data-order="ds04_nonlinear_interaction" data-search="ds04_nonlinear_interaction Nonlinear & Interactions (MERF / Tree Territory)"><strong>Nonlinear & Interactions (MERF / Tree Territory)</strong><br><small class="text-muted font-monospace">ds04_nonlinear_interaction</small></td><td data-order="Direct" data-search="Direct"><span class="badge bg-secondary-subtle text-secondary fw-semibold"><i class="fa-solid fa-scale-balanced me-1"></i>Direct</span></td><td class="text-end fw-semibold" data-order="0.57">0.57%</td><td class="text-end" data-order="0.45">0.45%</td><td class="text-center" data-order="100"><span class="badge bg-secondary-subtle text-secondary fw-semibold">100.0%</span></td><td class="text-end" data-order="0.9992">0.9992</td><td class="text-end font-monospace" data-order="0">0.0 MB</td><td class="text-end font-monospace" data-order="0">0.00s</td></tr>
-<tr><td data-order="ds04_nonlinear_interaction" data-search="ds04_nonlinear_interaction Nonlinear & Interactions (MERF / Tree Territory)"><strong>Nonlinear & Interactions (MERF / Tree Territory)</strong><br><small class="text-muted font-monospace">ds04_nonlinear_interaction</small></td><td data-order="fastsaegpu_HB" data-search="fastsaegpu_HB"><span class="badge bg-purple-subtle text-purple fw-semibold"><i class="fa-solid fa-bolt me-1"></i>fastsaegpu_HB</span></td><td class="text-end fw-semibold" data-order="0.58">0.58%</td><td class="text-end" data-order="0.45">0.45%</td><td class="text-center" data-order="98.8"><span class="badge bg-secondary-subtle text-secondary fw-semibold">98.8%</span></td><td class="text-end" data-order="0.9992">0.9992</td><td class="text-end font-monospace" data-order="28.7">28.7 MB</td><td class="text-end font-monospace" data-order="18.88">18.88s</td></tr>
-<tr><td data-order="ds04_nonlinear_interaction" data-search="ds04_nonlinear_interaction Nonlinear & Interactions (MERF / Tree Territory)"><strong>Nonlinear & Interactions (MERF / Tree Territory)</strong><br><small class="text-muted font-monospace">ds04_nonlinear_interaction</small></td><td data-order="Enhanced_MERF" data-search="Enhanced_MERF"><span class="badge bg-emerald-subtle text-emerald fw-semibold"><i class="fa-solid fa-tree me-1"></i>Enhanced_MERF</span></td><td class="text-end fw-semibold" data-order="0.57">0.57%</td><td class="text-end" data-order="0.44">0.44%</td><td class="text-center" data-order="101.2"><span class="badge bg-secondary-subtle text-secondary fw-semibold">101.2%</span></td><td class="text-end" data-order="0.9992">0.9992</td><td class="text-end font-monospace" data-order="38.4">38.4 MB</td><td class="text-end font-monospace" data-order="0.38">0.38s</td></tr>
-<tr><td data-order="ds04_nonlinear_interaction" data-search="ds04_nonlinear_interaction Nonlinear & Interactions (MERF / Tree Territory)"><strong>Nonlinear & Interactions (MERF / Tree Territory)</strong><br><small class="text-muted font-monospace">ds04_nonlinear_interaction</small></td><td data-order="fastsae_EBLUP" data-search="fastsae_EBLUP"><span class="badge bg-primary-subtle text-primary fw-semibold"><i class="fa-solid fa-chart-line me-1"></i>fastsae_EBLUP</span></td><td class="text-end fw-semibold" data-order="0.58">0.58%</td><td class="text-end" data-order="0.45">0.45%</td><td class="text-center" data-order="99.3"><span class="badge bg-secondary-subtle text-secondary fw-semibold">99.3%</span></td><td class="text-end" data-order="0.9992">0.9992</td><td class="text-end font-monospace" data-order="0.4">0.4 MB</td><td class="text-end font-monospace" data-order="0">0.00s</td></tr>
-<tr><td data-order="ds04_nonlinear_interaction" data-search="ds04_nonlinear_interaction Nonlinear & Interactions (MERF / Tree Territory)"><strong>Nonlinear & Interactions (MERF / Tree Territory)</strong><br><small class="text-muted font-monospace">ds04_nonlinear_interaction</small></td><td data-order="fastsae_INLA" data-search="fastsae_INLA"><span class="badge bg-warning-subtle text-warning-emphasis fw-semibold"><i class="fa-solid fa-fire me-1"></i>fastsae_INLA</span></td><td class="text-end fw-semibold" data-order="0.58">0.58%</td><td class="text-end" data-order="0.45">0.45%</td><td class="text-center" data-order="99.2"><span class="badge bg-secondary-subtle text-secondary fw-semibold">99.2%</span></td><td class="text-end" data-order="0.9992">0.9992</td><td class="text-end font-monospace" data-order="48">48.0 MB</td><td class="text-end font-monospace" data-order="1.33">1.33s</td></tr>
-<tr><td data-order="ds05_spatial_correlated" data-search="ds05_spatial_correlated Spatial Correlated (SAR / CAR Topology)"><strong>Spatial Correlated (SAR / CAR Topology)</strong><br><small class="text-muted font-monospace">ds05_spatial_correlated</small></td><td data-order="Direct" data-search="Direct"><span class="badge bg-secondary-subtle text-secondary fw-semibold"><i class="fa-solid fa-scale-balanced me-1"></i>Direct</span></td><td class="text-end fw-semibold" data-order="0.47">0.47%</td><td class="text-end" data-order="0.38">0.38%</td><td class="text-center" data-order="100"><span class="badge bg-secondary-subtle text-secondary fw-semibold">100.0%</span></td><td class="text-end" data-order="0.994">0.9940</td><td class="text-end font-monospace" data-order="0">0.0 MB</td><td class="text-end font-monospace" data-order="0">0.00s</td></tr>
-<tr><td data-order="ds05_spatial_correlated" data-search="ds05_spatial_correlated Spatial Correlated (SAR / CAR Topology)"><strong>Spatial Correlated (SAR / CAR Topology)</strong><br><small class="text-muted font-monospace">ds05_spatial_correlated</small></td><td data-order="fastsaegpu_HB" data-search="fastsaegpu_HB"><span class="badge bg-purple-subtle text-purple fw-semibold"><i class="fa-solid fa-bolt me-1"></i>fastsaegpu_HB</span></td><td class="text-end fw-semibold" data-order="0.42">0.42%</td><td class="text-end" data-order="0.34">0.34%</td><td class="text-center" data-order="123.4"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>123.4%</span></td><td class="text-end" data-order="0.9951">0.9951</td><td class="text-end font-monospace" data-order="28.7">28.7 MB</td><td class="text-end font-monospace" data-order="6.25">6.25s</td></tr>
-<tr><td data-order="ds05_spatial_correlated" data-search="ds05_spatial_correlated Spatial Correlated (SAR / CAR Topology)"><strong>Spatial Correlated (SAR / CAR Topology)</strong><br><small class="text-muted font-monospace">ds05_spatial_correlated</small></td><td data-order="Enhanced_MERF" data-search="Enhanced_MERF"><span class="badge bg-emerald-subtle text-emerald fw-semibold"><i class="fa-solid fa-tree me-1"></i>Enhanced_MERF</span></td><td class="text-end fw-semibold" data-order="0.47">0.47%</td><td class="text-end" data-order="0.38">0.38%</td><td class="text-center" data-order="100.8"><span class="badge bg-secondary-subtle text-secondary fw-semibold">100.8%</span></td><td class="text-end" data-order="0.994">0.9940</td><td class="text-end font-monospace" data-order="36.7">36.7 MB</td><td class="text-end font-monospace" data-order="0.31">0.31s</td></tr>
-<tr><td data-order="ds05_spatial_correlated" data-search="ds05_spatial_correlated Spatial Correlated (SAR / CAR Topology)"><strong>Spatial Correlated (SAR / CAR Topology)</strong><br><small class="text-muted font-monospace">ds05_spatial_correlated</small></td><td data-order="fastsae_EBLUP" data-search="fastsae_EBLUP"><span class="badge bg-primary-subtle text-primary fw-semibold"><i class="fa-solid fa-chart-line me-1"></i>fastsae_EBLUP</span></td><td class="text-end fw-semibold" data-order="0.42">0.42%</td><td class="text-end" data-order="0.34">0.34%</td><td class="text-center" data-order="122.4"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>122.4%</span></td><td class="text-end" data-order="0.9951">0.9951</td><td class="text-end font-monospace" data-order="0.4">0.4 MB</td><td class="text-end font-monospace" data-order="0">0.00s</td></tr>
-<tr><td data-order="ds05_spatial_correlated" data-search="ds05_spatial_correlated Spatial Correlated (SAR / CAR Topology)"><strong>Spatial Correlated (SAR / CAR Topology)</strong><br><small class="text-muted font-monospace">ds05_spatial_correlated</small></td><td data-order="fastsae_INLA" data-search="fastsae_INLA"><span class="badge bg-warning-subtle text-warning-emphasis fw-semibold"><i class="fa-solid fa-fire me-1"></i>fastsae_INLA</span></td><td class="text-end fw-semibold" data-order="0.42">0.42%</td><td class="text-end" data-order="0.34">0.34%</td><td class="text-center" data-order="122.4"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>122.4%</span></td><td class="text-end" data-order="0.9951">0.9951</td><td class="text-end font-monospace" data-order="46.9">46.9 MB</td><td class="text-end font-monospace" data-order="1.26">1.26s</td></tr>
-<tr><td data-order="ds06_spatiotemporal_panel" data-search="ds06_spatiotemporal_panel Spatio-Temporal Panel (D=50 x T=5)"><strong>Spatio-Temporal Panel (D=50 x T=5)</strong><br><small class="text-muted font-monospace">ds06_spatiotemporal_panel</small></td><td data-order="Direct" data-search="Direct"><span class="badge bg-secondary-subtle text-secondary fw-semibold"><i class="fa-solid fa-scale-balanced me-1"></i>Direct</span></td><td class="text-end fw-semibold" data-order="0.5">0.50%</td><td class="text-end" data-order="0.39">0.39%</td><td class="text-center" data-order="100"><span class="badge bg-secondary-subtle text-secondary fw-semibold">100.0%</span></td><td class="text-end" data-order="0.9908">0.9908</td><td class="text-end font-monospace" data-order="0">0.0 MB</td><td class="text-end font-monospace" data-order="0">0.00s</td></tr>
-<tr><td data-order="ds06_spatiotemporal_panel" data-search="ds06_spatiotemporal_panel Spatio-Temporal Panel (D=50 x T=5)"><strong>Spatio-Temporal Panel (D=50 x T=5)</strong><br><small class="text-muted font-monospace">ds06_spatiotemporal_panel</small></td><td data-order="fastsaegpu_HB" data-search="fastsaegpu_HB"><span class="badge bg-purple-subtle text-purple fw-semibold"><i class="fa-solid fa-bolt me-1"></i>fastsaegpu_HB</span></td><td class="text-end fw-semibold" data-order="0.47">0.47%</td><td class="text-end" data-order="0.37">0.37%</td><td class="text-center" data-order="111"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>111.0%</span></td><td class="text-end" data-order="0.9914">0.9914</td><td class="text-end font-monospace" data-order="28.7">28.7 MB</td><td class="text-end font-monospace" data-order="20.26">20.26s</td></tr>
-<tr><td data-order="ds06_spatiotemporal_panel" data-search="ds06_spatiotemporal_panel Spatio-Temporal Panel (D=50 x T=5)"><strong>Spatio-Temporal Panel (D=50 x T=5)</strong><br><small class="text-muted font-monospace">ds06_spatiotemporal_panel</small></td><td data-order="Enhanced_MERF" data-search="Enhanced_MERF"><span class="badge bg-emerald-subtle text-emerald fw-semibold"><i class="fa-solid fa-tree me-1"></i>Enhanced_MERF</span></td><td class="text-end fw-semibold" data-order="0.49">0.49%</td><td class="text-end" data-order="0.38">0.38%</td><td class="text-center" data-order="103.9"><span class="badge bg-secondary-subtle text-secondary fw-semibold">103.9%</span></td><td class="text-end" data-order="0.9909">0.9909</td><td class="text-end font-monospace" data-order="52.1">52.1 MB</td><td class="text-end font-monospace" data-order="1.17">1.17s</td></tr>
-<tr><td data-order="ds06_spatiotemporal_panel" data-search="ds06_spatiotemporal_panel Spatio-Temporal Panel (D=50 x T=5)"><strong>Spatio-Temporal Panel (D=50 x T=5)</strong><br><small class="text-muted font-monospace">ds06_spatiotemporal_panel</small></td><td data-order="fastsae_EBLUP" data-search="fastsae_EBLUP"><span class="badge bg-primary-subtle text-primary fw-semibold"><i class="fa-solid fa-chart-line me-1"></i>fastsae_EBLUP</span></td><td class="text-end fw-semibold" data-order="0.47">0.47%</td><td class="text-end" data-order="0.37">0.37%</td><td class="text-center" data-order="110.6"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>110.6%</span></td><td class="text-end" data-order="0.9914">0.9914</td><td class="text-end font-monospace" data-order="0.4">0.4 MB</td><td class="text-end font-monospace" data-order="0">0.00s</td></tr>
-<tr><td data-order="ds06_spatiotemporal_panel" data-search="ds06_spatiotemporal_panel Spatio-Temporal Panel (D=50 x T=5)"><strong>Spatio-Temporal Panel (D=50 x T=5)</strong><br><small class="text-muted font-monospace">ds06_spatiotemporal_panel</small></td><td data-order="fastsae_INLA" data-search="fastsae_INLA"><span class="badge bg-warning-subtle text-warning-emphasis fw-semibold"><i class="fa-solid fa-fire me-1"></i>fastsae_INLA</span></td><td class="text-end fw-semibold" data-order="0.47">0.47%</td><td class="text-end" data-order="0.37">0.37%</td><td class="text-center" data-order="110.6"><span class="badge bg-success text-white fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i>110.6%</span></td><td class="text-end" data-order="0.9914">0.9914</td><td class="text-end font-monospace" data-order="51.5">51.5 MB</td><td class="text-end font-monospace" data-order="1.31">1.31s</td></tr>
-<tr><td data-order="ds07_extreme_outliers" data-search="ds07_extreme_outliers Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)"><strong>Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)</strong><br><small class="text-muted font-monospace">ds07_extreme_outliers</small></td><td data-order="Direct" data-search="Direct"><span class="badge bg-secondary-subtle text-secondary fw-semibold"><i class="fa-solid fa-scale-balanced me-1"></i>Direct</span></td><td class="text-end fw-semibold" data-order="0.59">0.59%</td><td class="text-end" data-order="0.47">0.47%</td><td class="text-center" data-order="100"><span class="badge bg-secondary-subtle text-secondary fw-semibold">100.0%</span></td><td class="text-end" data-order="0.9943">0.9943</td><td class="text-end font-monospace" data-order="0.1">0.1 MB</td><td class="text-end font-monospace" data-order="0">0.00s</td></tr>
-<tr><td data-order="ds07_extreme_outliers" data-search="ds07_extreme_outliers Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)"><strong>Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)</strong><br><small class="text-muted font-monospace">ds07_extreme_outliers</small></td><td data-order="fastsaegpu_HB" data-search="fastsaegpu_HB"><span class="badge bg-purple-subtle text-purple fw-semibold"><i class="fa-solid fa-bolt me-1"></i>fastsaegpu_HB</span></td><td class="text-end fw-semibold" data-order="0.58">0.58%</td><td class="text-end" data-order="0.46">0.46%</td><td class="text-center" data-order="103"><span class="badge bg-secondary-subtle text-secondary fw-semibold">103.0%</span></td><td class="text-end" data-order="0.9943">0.9943</td><td class="text-end font-monospace" data-order="28.6">28.6 MB</td><td class="text-end font-monospace" data-order="9.93">9.93s</td></tr>
-<tr><td data-order="ds07_extreme_outliers" data-search="ds07_extreme_outliers Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)"><strong>Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)</strong><br><small class="text-muted font-monospace">ds07_extreme_outliers</small></td><td data-order="Enhanced_MERF" data-search="Enhanced_MERF"><span class="badge bg-emerald-subtle text-emerald fw-semibold"><i class="fa-solid fa-tree me-1"></i>Enhanced_MERF</span></td><td class="text-end fw-semibold" data-order="0.58">0.58%</td><td class="text-end" data-order="0.46">0.46%</td><td class="text-center" data-order="102.9"><span class="badge bg-secondary-subtle text-secondary fw-semibold">102.9%</span></td><td class="text-end" data-order="0.9944">0.9944</td><td class="text-end font-monospace" data-order="36.8">36.8 MB</td><td class="text-end font-monospace" data-order="0.32">0.32s</td></tr>
-<tr><td data-order="ds07_extreme_outliers" data-search="ds07_extreme_outliers Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)"><strong>Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)</strong><br><small class="text-muted font-monospace">ds07_extreme_outliers</small></td><td data-order="fastsae_EBLUP" data-search="fastsae_EBLUP"><span class="badge bg-primary-subtle text-primary fw-semibold"><i class="fa-solid fa-chart-line me-1"></i>fastsae_EBLUP</span></td><td class="text-end fw-semibold" data-order="0.58">0.58%</td><td class="text-end" data-order="0.46">0.46%</td><td class="text-center" data-order="103.1"><span class="badge bg-secondary-subtle text-secondary fw-semibold">103.1%</span></td><td class="text-end" data-order="0.9943">0.9943</td><td class="text-end font-monospace" data-order="0.3">0.3 MB</td><td class="text-end font-monospace" data-order="0">0.00s</td></tr>
-<tr><td data-order="ds07_extreme_outliers" data-search="ds07_extreme_outliers Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)"><strong>Extreme Outliers & Shocks (Contaminated / Heavy-Tailed)</strong><br><small class="text-muted font-monospace">ds07_extreme_outliers</small></td><td data-order="fastsae_INLA" data-search="fastsae_INLA"><span class="badge bg-warning-subtle text-warning-emphasis fw-semibold"><i class="fa-solid fa-fire me-1"></i>fastsae_INLA</span></td><td class="text-end fw-semibold" data-order="0.58">0.58%</td><td class="text-end" data-order="0.46">0.46%</td><td class="text-center" data-order="103.2"><span class="badge bg-secondary-subtle text-secondary fw-semibold">103.2%</span></td><td class="text-end" data-order="0.9943">0.9943</td><td class="text-end font-monospace" data-order="46.8">46.8 MB</td><td class="text-end font-monospace" data-order="1.2">1.20s</td></tr>
-<tr><td data-order="ds08_nested_subarea" data-search="ds08_nested_subarea Nested Subarea (Two-Fold Hierarchy: Province -> District)"><strong>Nested Subarea (Two-Fold Hierarchy: Province -> District)</strong><br><small class="text-muted font-monospace">ds08_nested_subarea</small></td><td data-order="Direct" data-search="Direct"><span class="badge bg-secondary-subtle text-secondary fw-semibold"><i class="fa-solid fa-scale-balanced me-1"></i>Direct</span></td><td class="text-end fw-semibold" data-order="0.46">0.46%</td><td class="text-end" data-order="0.36">0.36%</td><td class="text-center" data-order="100"><span class="badge bg-secondary-subtle text-secondary fw-semibold">100.0%</span></td><td class="text-end" data-order="0.9934">0.9934</td><td class="text-end font-monospace" data-order="0">0.0 MB</td><td class="text-end font-monospace" data-order="0">0.00s</td></tr>
-<tr><td data-order="ds08_nested_subarea" data-search="ds08_nested_subarea Nested Subarea (Two-Fold Hierarchy: Province -> District)"><strong>Nested Subarea (Two-Fold Hierarchy: Province -> District)</strong><br><small class="text-muted font-monospace">ds08_nested_subarea</small></td><td data-order="fastsaegpu_HB" data-search="fastsaegpu_HB"><span class="badge bg-purple-subtle text-purple fw-semibold"><i class="fa-solid fa-bolt me-1"></i>fastsaegpu_HB</span></td><td class="text-end fw-semibold" data-order="0.46">0.46%</td><td class="text-end" data-order="0.36">0.36%</td><td class="text-center" data-order="101.3"><span class="badge bg-secondary-subtle text-secondary fw-semibold">101.3%</span></td><td class="text-end" data-order="0.9933">0.9933</td><td class="text-end font-monospace" data-order="28.5">28.5 MB</td><td class="text-end font-monospace" data-order="6.39">6.39s</td></tr>
-<tr><td data-order="ds08_nested_subarea" data-search="ds08_nested_subarea Nested Subarea (Two-Fold Hierarchy: Province -> District)"><strong>Nested Subarea (Two-Fold Hierarchy: Province -> District)</strong><br><small class="text-muted font-monospace">ds08_nested_subarea</small></td><td data-order="Enhanced_MERF" data-search="Enhanced_MERF"><span class="badge bg-emerald-subtle text-emerald fw-semibold"><i class="fa-solid fa-tree me-1"></i>Enhanced_MERF</span></td><td class="text-end fw-semibold" data-order="0.46">0.46%</td><td class="text-end" data-order="0.36">0.36%</td><td class="text-center" data-order="101.7"><span class="badge bg-secondary-subtle text-secondary fw-semibold">101.7%</span></td><td class="text-end" data-order="0.9934">0.9934</td><td class="text-end font-monospace" data-order="36.8">36.8 MB</td><td class="text-end font-monospace" data-order="0.31">0.31s</td></tr>
-<tr><td data-order="ds08_nested_subarea" data-search="ds08_nested_subarea Nested Subarea (Two-Fold Hierarchy: Province -> District)"><strong>Nested Subarea (Two-Fold Hierarchy: Province -> District)</strong><br><small class="text-muted font-monospace">ds08_nested_subarea</small></td><td data-order="fastsae_EBLUP" data-search="fastsae_EBLUP"><span class="badge bg-primary-subtle text-primary fw-semibold"><i class="fa-solid fa-chart-line me-1"></i>fastsae_EBLUP</span></td><td class="text-end fw-semibold" data-order="0.45">0.45%</td><td class="text-end" data-order="0.36">0.36%</td><td class="text-center" data-order="102.1"><span class="badge bg-secondary-subtle text-secondary fw-semibold">102.1%</span></td><td class="text-end" data-order="0.9934">0.9934</td><td class="text-end font-monospace" data-order="0.3">0.3 MB</td><td class="text-end font-monospace" data-order="0">0.00s</td></tr>
-<tr><td data-order="ds08_nested_subarea" data-search="ds08_nested_subarea Nested Subarea (Two-Fold Hierarchy: Province -> District)"><strong>Nested Subarea (Two-Fold Hierarchy: Province -> District)</strong><br><small class="text-muted font-monospace">ds08_nested_subarea</small></td><td data-order="fastsae_INLA" data-search="fastsae_INLA"><span class="badge bg-warning-subtle text-warning-emphasis fw-semibold"><i class="fa-solid fa-fire me-1"></i>fastsae_INLA</span></td><td class="text-end fw-semibold" data-order="0.46">0.46%</td><td class="text-end" data-order="0.36">0.36%</td><td class="text-center" data-order="102"><span class="badge bg-secondary-subtle text-secondary fw-semibold">102.0%</span></td><td class="text-end" data-order="0.9934">0.9934</td><td class="text-end font-monospace" data-order="46.7">46.7 MB</td><td class="text-end font-monospace" data-order="1.25">1.25s</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Comparative Visualizations Section -->
-    <div class="mb-5">
+    <!-- Interactive Charts Section -->
+    <section class="mb-5">
       <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
-          <h2 class="h3 fw-bold text-white mb-1"><i class="fa-solid fa-chart-column text-primary me-2"></i>Comparative Visualizations</h2>
-          <p class="text-secondary small mb-0">Direct graphical comparisons across models and dataset archetypes</p>
+          <h2 class="h4 fw-bold mb-1"><i class="fa-solid fa-chart-scatter text-primary me-2"></i><span data-i18n="chart_section_title">Visualisasi Interaktif Trade-Off Model</span></h2>
+          <p class="text-muted small mb-0" data-i18n="chart_section_subtitle">Eksplorasi hubungan waktu komputasi versus akurasi dan efisiensi relatif model</p>
         </div>
-        <ul class="nav nav-pills" id="plotTabs" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="tab-releff" data-bs-toggle="pill" data-bs-target="#plot-releff" type="button" role="tab">
-              <i class="fa-solid fa-arrow-trend-up me-1"></i> Relative Efficiency
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-rrmse" data-bs-toggle="pill" data-bs-target="#plot-rrmse" type="button" role="tab">
-              <i class="fa-solid fa-chart-simple me-1"></i> RRMSE Comparison
-            </button>
-          </li>
-        </ul>
-      </div>
-
-      <div class="tab-content table-container p-3">
-        <div class="tab-pane fade show active text-center" id="plot-releff" role="tabpanel">
-          <img src="plots/leaderboard_relative_efficiency.png" alt="Relative Efficiency Comparison" class="img-fluid rounded shadow-sm border border-secondary border-opacity-25" style="max-height: 580px; width: 100%; object-fit: contain;">
+        <div class="d-flex align-items-center gap-2">
+          <label for="chartDatasetSelect" class="text-muted small text-nowrap fw-semibold"><i class="fa-solid fa-filter me-1"></i><span data-i18n="filter_dataset">Pilih Dataset:</span></label>
+          <select id="chartDatasetSelect" class="form-select form-select-sm bg-body border-secondary-subtle">
+            <option value="ALL" data-i18n="opt_all_datasets">Semua Dataset</option>
+            <option value="ds01_continuous_linear">Linier Baseline (ds01-linear)</option>
+<option value="ds02_bounded_rate">Tingkat Bounded (0,1) (ds02-rate)</option>
+<option value="ds03_highdim_sparse">Dimensi Tinggi (Sparse) (ds03-sparse)</option>
+<option value="ds04_nonlinear_interaction">Nonlinier Kompleks (ds04-nonlinear)</option>
+<option value="ds05_spatial_correlated">Spasial SAR (ds05-spatial)</option>
+<option value="ds06_spatiotemporal_panel">Panel Spasio-Temporal (ds06-panel)</option>
+<option value="ds07_extreme_outliers">Outlier Ekstrem (ds07-outliers)</option>
+<option value="ds08_nested_subarea">Hierarki Bersarang (ds08-nested)</option>
+          </select>
         </div>
-        <div class="tab-pane fade text-center" id="plot-rrmse" role="tabpanel">
-          <img src="plots/leaderboard_rrmse_comparison.png" alt="RRMSE Comparison" class="img-fluid rounded shadow-sm border border-secondary border-opacity-25" style="max-height: 580px; width: 100%; object-fit: contain;">
-        </div>
-      </div>
-    </div>
-
-    <!-- BPS Two-Stage Sampling Scheme -->
-    <div class="mb-5">
-      <div class="mb-3">
-        <h2 class="h3 fw-bold text-white mb-1"><i class="fa-solid fa-sitemap text-info me-2"></i>BPS Two-Stage Stratified Cluster Sampling Scheme</h2>
-        <p class="text-secondary small mb-0">Faithful implementation of official Badan Pusat Statistik Susenas design</p>
       </div>
 
       <div class="row g-3">
-        <div class="col-md-4">
-          <div class="scheme-step">
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <span class="badge bg-primary rounded-circle p-2" style="width: 28px; height: 28px;">1</span>
-              <h5 class="fs-6 text-white fw-bold mb-0">Stage 1: Primary Sampling Unit (PSU)</h5>
+        <div class="col-lg-7">
+          <div class="chart-container-box">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="fs-6 fw-bold mb-0"><i class="fa-solid fa-gauge-high text-info me-1"></i> <span data-i18n="chart_scatter_title">Runtime vs Efisiensi Relatif (Pareto Frontier)</span></h5>
+              <span class="badge bg-light text-dark border small" data-i18n="chart_scatter_badge">Makin ke atas & kiri makin unggul</span>
             </div>
-            <p class="text-secondary small mb-2">
-              Stratified by Urban/Rural within each Kabupaten. Selection of <strong>Blok Sensus (BS)</strong> via <strong>Probability Proportional to Size (PPS)</strong> without replacement based on household counts:
-            </p>
-            <div class="code-box font-monospace text-info small py-1 px-2 mb-0">
-              &pi;<sub>1,dhi</sub> = a<sub>dh</sub> &times; (M<sub>dhi</sub> / &sum; M<sub>dhk</sub>)
+            <div style="position: relative; height: 340px;">
+              <canvas id="scatterChart"></canvas>
             </div>
           </div>
         </div>
-
-        <div class="col-md-4">
-          <div class="scheme-step">
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <span class="badge bg-info rounded-circle p-2" style="width: 28px; height: 28px;">2</span>
-              <h5 class="fs-6 text-white fw-bold mb-0">Stage 2: Secondary Sampling Unit (SSU)</h5>
+        <div class="col-lg-5">
+          <div class="chart-container-box">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="fs-6 fw-bold mb-0"><i class="fa-solid fa-bars-staggered text-success me-1"></i> <span data-i18n="chart_bar_title">Perbandingan Efisiensi Relatif (%)</span></h5>
+              <span class="badge bg-light text-dark border small" data-i18n="chart_bar_badge">Baseline Direct = 100%</span>
             </div>
-            <p class="text-secondary small mb-2">
-              Systematic sampling of exactly <strong>m = 10 households</strong> per sampled Blok Sensus with a random start. Conditional inclusion probability:
-            </p>
-            <div class="code-box font-monospace text-info small py-1 px-2 mb-0">
-              &pi;<sub>2|1,dhij</sub> = 10 / M<sub>dhi</sub>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-4">
-          <div class="scheme-step">
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <span class="badge bg-success rounded-circle p-2" style="width: 28px; height: 28px;">3</span>
-              <h5 class="fs-6 text-white fw-bold mb-0">Design Weights & Variance</h5>
-            </div>
-            <p class="text-secondary small mb-2">
-              Calibrated weights <code>w<sub>dhij</sub> = M<sub>dh</sub> / (10 a<sub>dh</sub>)</code>. Sampling variance &psi;<sub>d</sub> estimated using <strong>Taylor Series Linearization</strong> via <code>survey::svydesign</code>, capturing intra-cluster clustering effects (Deff &gt; 1).
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Dataset Archetype Catalogue -->
-    <div class="mb-5">
-      <div class="mb-3">
-        <h2 class="h3 fw-bold text-white mb-1"><i class="fa-solid fa-boxes-stacked text-warning me-2"></i>Dataset Archetype Catalogue</h2>
-        <p class="text-secondary small mb-0">8 standardized data generating processes reflecting core Small Area Estimation challenges</p>
-      </div>
-      <div class="row g-3">
-<div class="col-md-6 col-lg-3"><div class="card h-100 archetype-card shadow-sm"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace">ds01_continuous_linear</span><span class="badge bg-secondary-subtle text-secondary rounded-pill">Baseline</span></div><h5 class="card-title text-light fw-bold fs-6 mb-2">Continuous Linear (Baseline Fay-Herriot)</h5><p class="card-text text-secondary small mb-3">Synthetic log per-capita household expenditure with 3 continuous auxiliary covariates and homoskedastic normal district shocks.</p><div class="archetype-challenge p-2 rounded bg-dark border border-secondary border-opacity-25"><small class="text-warning-emphasis d-block fw-semibold mb-1"><i class="fa-solid fa-bullseye me-1"></i>Benchmark Target:</small><small class="text-light-emphasis">Evaluates standard EBLUP / Hierarchical Bayes shrinkage efficiency gain over baseline direct estimates.</small></div></div></div></div>
-<div class="col-md-6 col-lg-3"><div class="card h-100 archetype-card shadow-sm"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace">ds02_bounded_rate</span><span class="badge bg-secondary-subtle text-secondary rounded-pill">Bounded (0, 1)</span></div><h5 class="card-title text-light fw-bold fs-6 mb-2">Bounded Rate (Poverty / Prevalence)</h5><p class="card-text text-secondary small mb-3">Binary household poverty indicators aggregated to district prevalence rates strictly within the unit interval (0, 1).</p><div class="archetype-challenge p-2 rounded bg-dark border border-secondary border-opacity-25"><small class="text-warning-emphasis d-block fw-semibold mb-1"><i class="fa-solid fa-bullseye me-1"></i>Benchmark Target:</small><small class="text-light-emphasis">Tests logit/arcsin/Beta links vs unconstrained linear models that risk producing negative rates or probabilities > 100%.</small></div></div></div></div>
-<div class="col-md-6 col-lg-3"><div class="card h-100 archetype-card shadow-sm"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace">ds03_highdim_sparse</span><span class="badge bg-secondary-subtle text-secondary rounded-pill">Regularization</span></div><h5 class="card-title text-light fw-bold fs-6 mb-2">High-Dimensional Sparse (Podes / Satellite Features)</h5><p class="card-text text-secondary small mb-3">25 area-level administrative and remote-sensing predictors, containing only 3 true generative signals and 22 collinear noise variables.</p><div class="archetype-challenge p-2 rounded bg-dark border border-secondary border-opacity-25"><small class="text-warning-emphasis d-block fw-semibold mb-1"><i class="fa-solid fa-bullseye me-1"></i>Benchmark Target:</small><small class="text-light-emphasis">Evaluates sparse Horseshoe priors, LASSO, and shrinkage regularizers against severe variance inflation and overfitting.</small></div></div></div></div>
-<div class="col-md-6 col-lg-3"><div class="card h-100 archetype-card shadow-sm"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace">ds04_nonlinear_interaction</span><span class="badge bg-secondary-subtle text-secondary rounded-pill">Nonlinear</span></div><h5 class="card-title text-light fw-bold fs-6 mb-2">Nonlinear & Interactions (MERF / Tree Territory)</h5><p class="card-text text-secondary small mb-3">Complex synthetic DGP featuring sine waves, quadratic polynomials, square root transformations, and multiplicative interaction terms.</p><div class="archetype-challenge p-2 rounded bg-dark border border-secondary border-opacity-25"><small class="text-warning-emphasis d-block fw-semibold mb-1"><i class="fa-solid fa-bullseye me-1"></i>Benchmark Target:</small><small class="text-light-emphasis">Tests Mixed Effects Random Forests (MERF) and non-parametric machine learning SAE against linear model misspecification.</small></div></div></div></div>
-<div class="col-md-6 col-lg-3"><div class="card h-100 archetype-card shadow-sm"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace">ds05_spatial_correlated</span><span class="badge bg-secondary-subtle text-secondary rounded-pill">Spatial SAR</span></div><h5 class="card-title text-light fw-bold fs-6 mb-2">Spatial Correlated (SAR / CAR Topology)</h5><p class="card-text text-secondary small mb-3">Area random effects generated via simultaneous autoregressive SAR process (rho = 0.65) over an authentic Queen adjacency spatial matrix.</p><div class="archetype-challenge p-2 rounded bg-dark border border-secondary border-opacity-25"><small class="text-warning-emphasis d-block fw-semibold mb-1"><i class="fa-solid fa-bullseye me-1"></i>Benchmark Target:</small><small class="text-light-emphasis">Assesses spatial borrowing of strength through Spatial Fay-Herriot (SEBLUP) and INLA Besag/BYM2 models.</small></div></div></div></div>
-<div class="col-md-6 col-lg-3"><div class="card h-100 archetype-card shadow-sm"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace">ds06_spatiotemporal_panel</span><span class="badge bg-secondary-subtle text-secondary rounded-pill">Panel AR(1)</span></div><h5 class="card-title text-light fw-bold fs-6 mb-2">Spatio-Temporal Panel (D=50 x T=5)</h5><p class="card-text text-secondary small mb-3">Multi-year repeated survey panel featuring AR(1) autocorrelation (phi = 0.70) across 5 discrete survey rounds.</p><div class="archetype-challenge p-2 rounded bg-dark border border-secondary border-opacity-25"><small class="text-warning-emphasis d-block fw-semibold mb-1"><i class="fa-solid fa-bullseye me-1"></i>Benchmark Target:</small><small class="text-light-emphasis">Benchmarks dynamic spatio-temporal filters, Rao-Yu models, and tipsae panel estimators across space and time.</small></div></div></div></div>
-<div class="col-md-6 col-lg-3"><div class="card h-100 archetype-card shadow-sm"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace">ds07_extreme_outliers</span><span class="badge bg-secondary-subtle text-secondary rounded-pill">Robust SAE</span></div><h5 class="card-title text-light fw-bold fs-6 mb-2">Extreme Outliers & Shocks (Contaminated)</h5><p class="card-text text-secondary small mb-3">Contaminated response generating 4 disaster shock districts exhibiting +/- 8 sigma outlier deviations from regression trend.</p><div class="archetype-challenge p-2 rounded bg-dark border border-secondary border-opacity-25"><small class="text-warning-emphasis d-block fw-semibold mb-1"><i class="fa-solid fa-bullseye me-1"></i>Benchmark Target:</small><small class="text-light-emphasis">Verifies robust M-estimation, Huber EBLUP, and heavy-tailed Student-t Bayesian shrinkage against leverage breakdowns.</small></div></div></div></div>
-<div class="col-md-6 col-lg-3"><div class="card h-100 archetype-card shadow-sm"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace">ds08_nested_subarea</span><span class="badge bg-secondary-subtle text-secondary rounded-pill">Nested Two-Fold</span></div><h5 class="card-title text-light fw-bold fs-6 mb-2">Nested Subarea (Two-Fold Hierarchy)</h5><p class="card-text text-secondary small mb-3">Hierarchical structure with districts (kabupaten) nested inside administrative provinces with dual random effects (v_p + u_pd).</p><div class="archetype-challenge p-2 rounded bg-dark border border-secondary border-opacity-25"><small class="text-warning-emphasis d-block fw-semibold mb-1"><i class="fa-solid fa-bullseye me-1"></i>Benchmark Target:</small><small class="text-light-emphasis">Tests multi-level Hierarchical Bayes and two-fold subarea borrowing across multiple administrative tiers.</small></div></div></div></div>
-      </div>
-    </div>
-
-    <!-- Quick Start Plug-and-Play -->
-    <div class="mb-5">
-      <div class="mb-3">
-        <h2 class="h3 fw-bold text-white mb-1"><i class="fa-solid fa-terminal text-success me-2"></i>Plug-and-Play Benchmark</h2>
-        <p class="text-secondary small mb-0">Benchmark your custom SAE model in 1 line of R</p>
-      </div>
-
-      <div class="row g-3">
-        <div class="col-lg-6">
-          <div class="card bg-dark border border-secondary border-opacity-25 h-100 p-3">
-            <h5 class="fs-6 text-white fw-bold mb-2"><i class="fa-solid fa-code me-2 text-primary"></i>R API (Custom Estimator)</h5>
-            <div class="code-box">
-              <button class="btn btn-outline-secondary btn-sm copy-btn" onclick="copyCode('r-snippet', this)">
-                <i class="fa-regular fa-copy me-1"></i> Copy
-              </button>
-              <pre id="r-snippet" class="mb-0 font-monospace text-light small"><code># 1. Source the benchmark engine
-source("engine/benchmark_runner.R")
-
-# 2. Define your model wrapper (accepts ds and formula_str)
-my_custom_sae <- function(ds, formula_str) {
-  fit <- my_pkg::model(formula = as.formula(formula_str), vardir = "psi_dir", data = ds)
-  return(fit$estimates)
-}
-
-# 3. Benchmark against the full battery
-results <- run_benchmark_suite(models = list("MyModel" = my_custom_sae))</code></pre>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-6">
-          <div class="card bg-dark border border-secondary border-opacity-25 h-100 p-3">
-            <h5 class="fs-6 text-white fw-bold mb-2"><i class="fa-solid fa-terminal me-2 text-info"></i>Terminal CLI</h5>
-            <div class="code-box">
-              <button class="btn btn-outline-secondary btn-sm copy-btn" onclick="copyCode('cli-snippet', this)">
-                <i class="fa-regular fa-copy me-1"></i> Copy
-              </button>
-              <pre id="cli-snippet" class="mb-0 font-monospace text-light small"><code># Run full battery across all 8 datasets
-Rscript run_test.R
-
-# Quick check on first 3 datasets
-Rscript run_test.R --quick
-
-# Run on a single specific archetype
-Rscript run_test.R --dataset=ds02_bounded_rate</code></pre>
+            <div style="position: relative; height: 340px;">
+              <canvas id="barChart"></canvas>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
+
+    <!-- Leaderboard Per Dataset Section -->
+    <section class="mb-5">
+      <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-2">
+        <div>
+          <h2 class="h4 fw-bold mb-1"><i class="fa-solid fa-table-list text-primary me-2"></i><span data-i18n="table_section_title">Tabel Evaluasi Model per Dataset</span></h2>
+          <p class="text-muted small mb-0" data-i18n="table_section_subtitle">Setiap dataset menguji tantangan terpisah; nilai terbaik per metrik diberi highlight sel hijau.</p>
+        </div>
+      </div>
+
+      <!-- Dataset Pills Navigation -->
+      <ul class="nav nav-pills mb-3 gap-1 overflow-x-auto pb-1 flex-nowrap" id="datasetTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-ds01-linear" data-bs-toggle="pill" data-bs-target="#pane-ds01-linear" type="button" role="tab">
+          <span class="font-monospace fw-semibold">ds01-linear</span>
+          <span class="d-none d-md-inline ms-1 text-muted small tab-name" data-name-en="Linear Baseline" data-name-id="Linier Baseline">Linier Baseline</span>
+        </button>
+      </li>
+<li class="nav-item" role="presentation">
+        <button class="nav-link " id="tab-ds02-rate" data-bs-toggle="pill" data-bs-target="#pane-ds02-rate" type="button" role="tab">
+          <span class="font-monospace fw-semibold">ds02-rate</span>
+          <span class="d-none d-md-inline ms-1 text-muted small tab-name" data-name-en="Bounded Rate (0,1)" data-name-id="Tingkat Bounded (0,1)">Tingkat Bounded (0,1)</span>
+        </button>
+      </li>
+<li class="nav-item" role="presentation">
+        <button class="nav-link " id="tab-ds03-sparse" data-bs-toggle="pill" data-bs-target="#pane-ds03-sparse" type="button" role="tab">
+          <span class="font-monospace fw-semibold">ds03-sparse</span>
+          <span class="d-none d-md-inline ms-1 text-muted small tab-name" data-name-en="High-Dim Sparse" data-name-id="Dimensi Tinggi (Sparse)">Dimensi Tinggi (Sparse)</span>
+        </button>
+      </li>
+<li class="nav-item" role="presentation">
+        <button class="nav-link " id="tab-ds04-nonlinear" data-bs-toggle="pill" data-bs-target="#pane-ds04-nonlinear" type="button" role="tab">
+          <span class="font-monospace fw-semibold">ds04-nonlinear</span>
+          <span class="d-none d-md-inline ms-1 text-muted small tab-name" data-name-en="Nonlinear Complex" data-name-id="Nonlinier Kompleks">Nonlinier Kompleks</span>
+        </button>
+      </li>
+<li class="nav-item" role="presentation">
+        <button class="nav-link " id="tab-ds05-spatial" data-bs-toggle="pill" data-bs-target="#pane-ds05-spatial" type="button" role="tab">
+          <span class="font-monospace fw-semibold">ds05-spatial</span>
+          <span class="d-none d-md-inline ms-1 text-muted small tab-name" data-name-en="Spatial SAR" data-name-id="Spasial SAR">Spasial SAR</span>
+        </button>
+      </li>
+<li class="nav-item" role="presentation">
+        <button class="nav-link " id="tab-ds06-panel" data-bs-toggle="pill" data-bs-target="#pane-ds06-panel" type="button" role="tab">
+          <span class="font-monospace fw-semibold">ds06-panel</span>
+          <span class="d-none d-md-inline ms-1 text-muted small tab-name" data-name-en="Panel Spatio-Temporal" data-name-id="Panel Spasio-Temporal">Panel Spasio-Temporal</span>
+        </button>
+      </li>
+<li class="nav-item" role="presentation">
+        <button class="nav-link " id="tab-ds07-outliers" data-bs-toggle="pill" data-bs-target="#pane-ds07-outliers" type="button" role="tab">
+          <span class="font-monospace fw-semibold">ds07-outliers</span>
+          <span class="d-none d-md-inline ms-1 text-muted small tab-name" data-name-en="Extreme Outliers" data-name-id="Outlier Ekstrem">Outlier Ekstrem</span>
+        </button>
+      </li>
+<li class="nav-item" role="presentation">
+        <button class="nav-link " id="tab-ds08-nested" data-bs-toggle="pill" data-bs-target="#pane-ds08-nested" type="button" role="tab">
+          <span class="font-monospace fw-semibold">ds08-nested</span>
+          <span class="d-none d-md-inline ms-1 text-muted small tab-name" data-name-en="Nested Hierarchy" data-name-id="Hierarki Bersarang">Hierarki Bersarang</span>
+        </button>
+      </li>
+      </ul>
+
+      <!-- Dataset Tab Content Panes -->
+      <div class="tab-content" id="datasetTabContent">
+        <div class="tab-pane fade show active" id="pane-ds01-linear" role="tabpanel">
+        <div class="card dataset-card mb-4">
+          <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace">ds01-linear</span>
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill badge-meta" data-en="Continuous Linear" data-id="Linier Kontinu">Linier Kontinu</span>
+              </div>
+              <h4 class="h5 fw-bold mb-0 text-title" data-en="Linear Baseline" data-id="Linier Baseline">Linier Baseline</h4>
+            </div>
+            <div class="text-end">
+              <span class="text-muted small"><i class="fa-solid fa-bullseye text-warning me-1"></i><span data-i18n="benchmark_goal">Fokus Pengujian:</span></span>
+              <p class="text-body-secondary small mb-0 challenge-text" data-en="Baseline shrinkage efficiency gain of EBLUP and Hierarchical Bayes over Direct." data-id="Efisiensi awal penyusutan EBLUP dan Hierarchical Bayes terhadap Direct.">Efisiensi awal penyusutan EBLUP dan Hierarchical Bayes terhadap Direct.</p>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive"><table class="table table-hover align-middle mb-0 benchmark-table"><thead><tr class="table-header-row text-uppercase small"><th data-i18n="col_model">Model / Package</th><th class="text-end" data-i18n="col_releff">Rel. Efficiency (%)</th><th class="text-end" data-i18n="col_rrmse">RRMSE (%)</th><th class="text-end" data-i18n="col_arb">ARB (%)</th><th class="text-end" data-i18n="col_corr">Corr</th><th class="text-end" data-i18n="col_ram">Peak RAM</th><th class="text-end" data-i18n="col_runtime">Runtime</th></tr></thead><tbody><tr><td><span class="rank-badge rank-1"><i class="fa-solid fa-crown text-warning"></i> #1</span> <span class="pkg-badge badge-blue">fastsae (eblup_fh, REML)</span></td><td class="text-end best-cell">111.3% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.38% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.31% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9906 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace best-cell">2.0 MB</td><td class="text-end font-monospace ">0.02s</td></tr>
+<tr><td><span class="rank-badge rank-2">#2</span> <span class="pkg-badge badge-blue">fastsae (hb_area, INLA)</span></td><td class="text-end best-cell">111.3% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.38% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.31% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9906 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">136.8 MB</td><td class="text-end font-monospace ">1.92s</td></tr>
+<tr><td><span class="rank-badge rank-3">#3</span> <span class="pkg-badge badge-indigo">hbsae (fSAE.Area, Hierarchical Bayes)</span></td><td class="text-end best-cell">111.3% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.38% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.31% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9906 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">8.5 MB</td><td class="text-end font-monospace ">0.12s</td></tr>
+<tr><td><span class="rank-badge rank-n">#4</span> <span class="pkg-badge badge-sky">sae (eblupFH, REML)</span></td><td class="text-end best-cell">111.3% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.38% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.31% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9906 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">3.2 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr>
+<tr><td><span class="rank-badge rank-n">#5</span> <span class="pkg-badge badge-purple">fastsaegpu (hb_area, GPU-MCMC)</span></td><td class="text-end text-success fw-semibold">110.9%</td><td class="text-end best-cell">0.38% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.31% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9906 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">160.0 MB</td><td class="text-end font-monospace ">14.04s</td></tr>
+<tr><td><span class="rank-badge rank-n">#6</span> <span class="pkg-badge badge-purple">fastsaegpu (merf_area, ML-Random Forest)</span></td><td class="text-end text-body">101.9%</td><td class="text-end ">0.40%</td><td class="text-end ">0.32%</td><td class="text-end ">0.9898</td><td class="text-end font-monospace ">44.6 MB</td><td class="text-end font-monospace ">0.36s</td></tr>
+<tr><td><span class="rank-badge rank-n">#7</span> <span class="pkg-badge badge-gray">survey (direct, Taylor)</span></td><td class="text-end text-body">100.0%</td><td class="text-end ">0.41%</td><td class="text-end ">0.32%</td><td class="text-end ">0.9897</td><td class="text-end font-monospace ">0.0 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr></tbody></table></div>
+          </div>
+          <div class="card-footer bg-transparent border-top py-2 px-3 d-flex justify-content-between align-items-center text-muted small">
+            <span><i class="fa-solid fa-circle-info me-1"></i><span data-i18n="dgp_label">Struktur DGP:</span> <span class="dgp-text" data-en="Log per-capita household expenditure, 3 linear covariates, normal random effects." data-id="Log pengeluaran per kapita rumah tangga, 3 kovariat linier, efek acak normal.">Log pengeluaran per kapita rumah tangga, 3 kovariat linier, efek acak normal.</span></span>
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-crown text-warning me-1"></i><span data-i18n="best_legend">Nilai terbaik ditandai hijau</span></span>
+          </div>
+        </div>
+      </div>
+<div class="tab-pane fade " id="pane-ds02-rate" role="tabpanel">
+        <div class="card dataset-card mb-4">
+          <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace">ds02-rate</span>
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill badge-meta" data-en="Unit Interval (0, 1)" data-id="Interval Unit (0, 1)">Interval Unit (0, 1)</span>
+              </div>
+              <h4 class="h5 fw-bold mb-0 text-title" data-en="Bounded Rate (0,1)" data-id="Tingkat Bounded (0,1)">Tingkat Bounded (0,1)</h4>
+            </div>
+            <div class="text-end">
+              <span class="text-muted small"><i class="fa-solid fa-bullseye text-warning me-1"></i><span data-i18n="benchmark_goal">Fokus Pengujian:</span></span>
+              <p class="text-body-secondary small mb-0 challenge-text" data-en="Evaluates Beta Stan HMC and logit links; prevents rates < 0 or > 100%." data-id="Menguji Beta Stan HMC dan transformasi logit; mencegah tingkat < 0 atau > 100%.">Menguji Beta Stan HMC dan transformasi logit; mencegah tingkat < 0 atau > 100%.</p>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive"><table class="table table-hover align-middle mb-0 benchmark-table"><thead><tr class="table-header-row text-uppercase small"><th data-i18n="col_model">Model / Package</th><th class="text-end" data-i18n="col_releff">Rel. Efficiency (%)</th><th class="text-end" data-i18n="col_rrmse">RRMSE (%)</th><th class="text-end" data-i18n="col_arb">ARB (%)</th><th class="text-end" data-i18n="col_corr">Corr</th><th class="text-center" data-i18n="col_violations">Violations (&lt;0 / &gt;1)</th><th class="text-end" data-i18n="col_ram">Peak RAM</th><th class="text-end" data-i18n="col_runtime">Runtime</th></tr></thead><tbody><tr><td><span class="rank-badge rank-1"><i class="fa-solid fa-crown text-warning"></i> #1</span> <span class="pkg-badge badge-teal">tipsae (fit_sae, Beta Stan HMC)</span></td><td class="text-end best-cell">156.6% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">23.46% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">18.25% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9388 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-center font-monospace text-success fw-bold">0</td><td class="text-end font-monospace ">185.0 MB</td><td class="text-end font-monospace ">1.42s</td></tr>
+<tr><td><span class="rank-badge rank-2">#2</span> <span class="pkg-badge badge-indigo">hbsae (fSAE.Area, Hierarchical Bayes)</span></td><td class="text-end text-success fw-semibold">120.5%</td><td class="text-end ">29.33%</td><td class="text-end ">20.80%</td><td class="text-end ">0.9148</td><td class="text-center font-monospace text-success fw-bold">0</td><td class="text-end font-monospace ">8.5 MB</td><td class="text-end font-monospace ">0.04s</td></tr>
+<tr><td><span class="rank-badge rank-3">#3</span> <span class="pkg-badge badge-purple">fastsaegpu (merf_area, ML-Random Forest)</span></td><td class="text-end text-success fw-semibold">119.6%</td><td class="text-end ">34.91%</td><td class="text-end ">23.62%</td><td class="text-end ">0.9173</td><td class="text-center font-monospace text-success fw-bold">0</td><td class="text-end font-monospace ">41.0 MB</td><td class="text-end font-monospace ">0.32s</td></tr>
+<tr><td><span class="rank-badge rank-n">#4</span> <span class="pkg-badge badge-blue">fastsae (hb_area, INLA)</span></td><td class="text-end text-success fw-semibold">119.3%</td><td class="text-end ">29.20%</td><td class="text-end ">20.70%</td><td class="text-end ">0.9139</td><td class="text-center font-monospace text-success fw-bold">0</td><td class="text-end font-monospace ">51.0 MB</td><td class="text-end font-monospace ">1.22s</td></tr>
+<tr><td><span class="rank-badge rank-n">#5</span> <span class="pkg-badge badge-blue">fastsae (eblup_fh, REML)</span></td><td class="text-end text-success fw-semibold">118.1%</td><td class="text-end ">29.15%</td><td class="text-end ">20.71%</td><td class="text-end ">0.9130</td><td class="text-center font-monospace text-success fw-bold">0</td><td class="text-end font-monospace ">3.6 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr>
+<tr><td><span class="rank-badge rank-n">#6</span> <span class="pkg-badge badge-purple">fastsaegpu (hb_area, GPU-MCMC)</span></td><td class="text-end text-success fw-semibold">117.5%</td><td class="text-end ">29.15%</td><td class="text-end ">20.63%</td><td class="text-end ">0.9126</td><td class="text-center font-monospace text-success fw-bold">0</td><td class="text-end font-monospace ">39.2 MB</td><td class="text-end font-monospace ">6.41s</td></tr>
+<tr><td><span class="rank-badge rank-n">#7</span> <span class="pkg-badge badge-gray">survey (direct, Taylor)</span></td><td class="text-end text-body">100.0%</td><td class="text-end ">36.16%</td><td class="text-end ">24.67%</td><td class="text-end ">0.9192</td><td class="text-center font-monospace text-success fw-bold">0</td><td class="text-end font-monospace best-cell">0.5 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr></tbody></table></div>
+          </div>
+          <div class="card-footer bg-transparent border-top py-2 px-3 d-flex justify-content-between align-items-center text-muted small">
+            <span><i class="fa-solid fa-circle-info me-1"></i><span data-i18n="dgp_label">Struktur DGP:</span> <span class="dgp-text" data-en="Household poverty indicators aggregated to district rates strictly bounded in (0, 1)." data-id="Indikator kemiskinan rumah tangga diagregasi ke tingkat kabupaten dalam rentang (0, 1).">Indikator kemiskinan rumah tangga diagregasi ke tingkat kabupaten dalam rentang (0, 1).</span></span>
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-crown text-warning me-1"></i><span data-i18n="best_legend">Nilai terbaik ditandai hijau</span></span>
+          </div>
+        </div>
+      </div>
+<div class="tab-pane fade " id="pane-ds03-sparse" role="tabpanel">
+        <div class="card dataset-card mb-4">
+          <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace">ds03-sparse</span>
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill badge-meta" data-en="25 Auxiliary Features" data-id="25 Fitur Tambahan">25 Fitur Tambahan</span>
+              </div>
+              <h4 class="h5 fw-bold mb-0 text-title" data-en="High-Dim Sparse" data-id="Dimensi Tinggi (Sparse)">Dimensi Tinggi (Sparse)</h4>
+            </div>
+            <div class="text-end">
+              <span class="text-muted small"><i class="fa-solid fa-bullseye text-warning me-1"></i><span data-i18n="benchmark_goal">Fokus Pengujian:</span></span>
+              <p class="text-body-secondary small mb-0 challenge-text" data-en="Evaluates regularization, horseshoe shrinkage, and feature screening against overfitting." data-id="Menguji regularisasi, penyusutan horseshoe, dan seleksi fitur dari overfitting.">Menguji regularisasi, penyusutan horseshoe, dan seleksi fitur dari overfitting.</p>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive"><table class="table table-hover align-middle mb-0 benchmark-table"><thead><tr class="table-header-row text-uppercase small"><th data-i18n="col_model">Model / Package</th><th class="text-end" data-i18n="col_releff">Rel. Efficiency (%)</th><th class="text-end" data-i18n="col_rrmse">RRMSE (%)</th><th class="text-end" data-i18n="col_arb">ARB (%)</th><th class="text-end" data-i18n="col_corr">Corr</th><th class="text-end" data-i18n="col_ram">Peak RAM</th><th class="text-end" data-i18n="col_runtime">Runtime</th></tr></thead><tbody><tr><td><span class="rank-badge rank-1"><i class="fa-solid fa-crown text-warning"></i> #1</span> <span class="pkg-badge badge-blue">fastsae (eblup_fh, REML)</span></td><td class="text-end best-cell">111.1% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.53% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.43% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9984 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace best-cell">1.0 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr>
+<tr><td><span class="rank-badge rank-2">#2</span> <span class="pkg-badge badge-blue">fastsae (hb_area, INLA)</span></td><td class="text-end best-cell">111.1% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.53% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.43% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9984 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">60.5 MB</td><td class="text-end font-monospace ">1.28s</td></tr>
+<tr><td><span class="rank-badge rank-3">#3</span> <span class="pkg-badge badge-sky">sae (eblupFH, REML)</span></td><td class="text-end best-cell">111.1% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.53% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.43% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9984 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">3.2 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr>
+<tr><td><span class="rank-badge rank-n">#4</span> <span class="pkg-badge badge-indigo">hbsae (fSAE.Area, Hierarchical Bayes)</span></td><td class="text-end text-success fw-semibold">111.0%</td><td class="text-end best-cell">0.53% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.43% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9984 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">8.5 MB</td><td class="text-end font-monospace ">0.06s</td></tr>
+<tr><td><span class="rank-badge rank-n">#5</span> <span class="pkg-badge badge-purple">fastsaegpu (hb_area, GPU-MCMC)</span></td><td class="text-end text-success fw-semibold">110.6%</td><td class="text-end best-cell">0.53% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.43% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9984 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">29.2 MB</td><td class="text-end font-monospace ">9.52s</td></tr>
+<tr><td><span class="rank-badge rank-n">#6</span> <span class="pkg-badge badge-gray">survey (direct, Taylor)</span></td><td class="text-end text-body">100.0%</td><td class="text-end ">0.56%</td><td class="text-end ">0.46%</td><td class="text-end ">0.9982</td><td class="text-end font-monospace ">0.0 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr>
+<tr><td><span class="rank-badge rank-n">#7</span> <span class="pkg-badge badge-purple">fastsaegpu (merf_area, ML-Random Forest)</span></td><td class="text-end text-body">99.7%</td><td class="text-end ">0.56%</td><td class="text-end ">0.46%</td><td class="text-end ">0.9982</td><td class="text-end font-monospace ">21.9 MB</td><td class="text-end font-monospace ">0.23s</td></tr></tbody></table></div>
+          </div>
+          <div class="card-footer bg-transparent border-top py-2 px-3 d-flex justify-content-between align-items-center text-muted small">
+            <span><i class="fa-solid fa-circle-info me-1"></i><span data-i18n="dgp_label">Struktur DGP:</span> <span class="dgp-text" data-en="25 area-level features containing only 3 true signals and 22 collinear noise variables." data-id="25 prediktor tingkat area dengan hanya 3 sinyal nyata dan 22 variabel derau.">25 prediktor tingkat area dengan hanya 3 sinyal nyata dan 22 variabel derau.</span></span>
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-crown text-warning me-1"></i><span data-i18n="best_legend">Nilai terbaik ditandai hijau</span></span>
+          </div>
+        </div>
+      </div>
+<div class="tab-pane fade " id="pane-ds04-nonlinear" role="tabpanel">
+        <div class="card dataset-card mb-4">
+          <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace">ds04-nonlinear</span>
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill badge-meta" data-en="Tree / Machine Learning" data-id="Tree / Machine Learning">Tree / Machine Learning</span>
+              </div>
+              <h4 class="h5 fw-bold mb-0 text-title" data-en="Nonlinear Complex" data-id="Nonlinier Kompleks">Nonlinier Kompleks</h4>
+            </div>
+            <div class="text-end">
+              <span class="text-muted small"><i class="fa-solid fa-bullseye text-warning me-1"></i><span data-i18n="benchmark_goal">Fokus Pengujian:</span></span>
+              <p class="text-body-secondary small mb-0 challenge-text" data-en="Linear Fay-Herriot misspecification; tests Mixed Effects Random Forests (MERF)." data-id="Miskualifikasi model linier; menguji Mixed Effects Random Forests (MERF).">Miskualifikasi model linier; menguji Mixed Effects Random Forests (MERF).</p>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive"><table class="table table-hover align-middle mb-0 benchmark-table"><thead><tr class="table-header-row text-uppercase small"><th data-i18n="col_model">Model / Package</th><th class="text-end" data-i18n="col_releff">Rel. Efficiency (%)</th><th class="text-end" data-i18n="col_rrmse">RRMSE (%)</th><th class="text-end" data-i18n="col_arb">ARB (%)</th><th class="text-end" data-i18n="col_corr">Corr</th><th class="text-end" data-i18n="col_ram">Peak RAM</th><th class="text-end" data-i18n="col_runtime">Runtime</th></tr></thead><tbody><tr><td><span class="rank-badge rank-1"><i class="fa-solid fa-crown text-warning"></i> #1</span> <span class="pkg-badge badge-purple">fastsaegpu (merf_area, ML-Random Forest)</span></td><td class="text-end best-cell">101.2% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.57% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.44% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9992 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">38.4 MB</td><td class="text-end font-monospace ">0.38s</td></tr>
+<tr><td><span class="rank-badge rank-2">#2</span> <span class="pkg-badge badge-gray">survey (direct, Taylor)</span></td><td class="text-end text-body">100.0%</td><td class="text-end best-cell">0.57% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end ">0.45%</td><td class="text-end best-cell">0.9992 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">0.0 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr>
+<tr><td><span class="rank-badge rank-3">#3</span> <span class="pkg-badge badge-blue">fastsae (eblup_fh, REML)</span></td><td class="text-end text-body">99.3%</td><td class="text-end ">0.58%</td><td class="text-end ">0.45%</td><td class="text-end best-cell">0.9992 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace best-cell">0.4 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr>
+<tr><td><span class="rank-badge rank-n">#4</span> <span class="pkg-badge badge-indigo">hbsae (fSAE.Area, Hierarchical Bayes)</span></td><td class="text-end text-body">99.3%</td><td class="text-end ">0.58%</td><td class="text-end ">0.45%</td><td class="text-end best-cell">0.9992 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">8.5 MB</td><td class="text-end font-monospace ">0.02s</td></tr>
+<tr><td><span class="rank-badge rank-n">#5</span> <span class="pkg-badge badge-sky">sae (eblupFH, REML)</span></td><td class="text-end text-body">99.3%</td><td class="text-end ">0.58%</td><td class="text-end ">0.45%</td><td class="text-end best-cell">0.9992 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">3.2 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr>
+<tr><td><span class="rank-badge rank-n">#6</span> <span class="pkg-badge badge-blue">fastsae (hb_area, INLA)</span></td><td class="text-end text-body">99.2%</td><td class="text-end ">0.58%</td><td class="text-end ">0.45%</td><td class="text-end best-cell">0.9992 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">48.0 MB</td><td class="text-end font-monospace ">1.33s</td></tr>
+<tr><td><span class="rank-badge rank-n">#7</span> <span class="pkg-badge badge-purple">fastsaegpu (hb_area, GPU-MCMC)</span></td><td class="text-end text-danger">98.8%</td><td class="text-end ">0.58%</td><td class="text-end ">0.45%</td><td class="text-end best-cell">0.9992 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">28.7 MB</td><td class="text-end font-monospace ">18.88s</td></tr></tbody></table></div>
+          </div>
+          <div class="card-footer bg-transparent border-top py-2 px-3 d-flex justify-content-between align-items-center text-muted small">
+            <span><i class="fa-solid fa-circle-info me-1"></i><span data-i18n="dgp_label">Struktur DGP:</span> <span class="dgp-text" data-en="Complex DGP with sine waves, quadratic terms, square roots, and multiplicative interactions." data-id="DGP kompleks dengan gelombang sinus, kuadratik, akar, dan interaksi multiplikatif.">DGP kompleks dengan gelombang sinus, kuadratik, akar, dan interaksi multiplikatif.</span></span>
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-crown text-warning me-1"></i><span data-i18n="best_legend">Nilai terbaik ditandai hijau</span></span>
+          </div>
+        </div>
+      </div>
+<div class="tab-pane fade " id="pane-ds05-spatial" role="tabpanel">
+        <div class="card dataset-card mb-4">
+          <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace">ds05-spatial</span>
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill badge-meta" data-en="SAR rho=0.65 (Matrix W)" data-id="SAR rho=0.65 (Matriks W)">SAR rho=0.65 (Matriks W)</span>
+              </div>
+              <h4 class="h5 fw-bold mb-0 text-title" data-en="Spatial SAR" data-id="Spasial SAR">Spasial SAR</h4>
+            </div>
+            <div class="text-end">
+              <span class="text-muted small"><i class="fa-solid fa-bullseye text-warning me-1"></i><span data-i18n="benchmark_goal">Fokus Pengujian:</span></span>
+              <p class="text-body-secondary small mb-0 challenge-text" data-en="Spatial borrowing of strength through Spatial Fay-Herriot (SEBLUP) and INLA Besag." data-id="Peminjaman kekuatan spasial melalui Spatial Fay-Herriot (SEBLUP) dan INLA Besag.">Peminjaman kekuatan spasial melalui Spatial Fay-Herriot (SEBLUP) dan INLA Besag.</p>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive"><table class="table table-hover align-middle mb-0 benchmark-table"><thead><tr class="table-header-row text-uppercase small"><th data-i18n="col_model">Model / Package</th><th class="text-end" data-i18n="col_releff">Rel. Efficiency (%)</th><th class="text-end" data-i18n="col_rrmse">RRMSE (%)</th><th class="text-end" data-i18n="col_arb">ARB (%)</th><th class="text-end" data-i18n="col_corr">Corr</th><th class="text-end" data-i18n="col_ram">Peak RAM</th><th class="text-end" data-i18n="col_runtime">Runtime</th></tr></thead><tbody><tr><td><span class="rank-badge rank-1"><i class="fa-solid fa-crown text-warning"></i> #1</span> <span class="pkg-badge badge-sky">sae (eblupSFH, Spatial SAR)</span></td><td class="text-end best-cell">126.4% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.42% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.34% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9953 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">12.0 MB</td><td class="text-end font-monospace ">0.03s</td></tr>
+<tr><td><span class="rank-badge rank-2">#2</span> <span class="pkg-badge badge-purple">fastsaegpu (hb_area, GPU-MCMC)</span></td><td class="text-end text-success fw-semibold">123.4%</td><td class="text-end best-cell">0.42% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.34% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end ">0.9951</td><td class="text-end font-monospace ">28.7 MB</td><td class="text-end font-monospace ">6.25s</td></tr>
+<tr><td><span class="rank-badge rank-3">#3</span> <span class="pkg-badge badge-blue">fastsae (eblup_fh, REML)</span></td><td class="text-end text-success fw-semibold">122.4%</td><td class="text-end best-cell">0.42% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.34% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end ">0.9951</td><td class="text-end font-monospace best-cell">0.4 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr>
+<tr><td><span class="rank-badge rank-n">#4</span> <span class="pkg-badge badge-blue">fastsae (hb_area, INLA)</span></td><td class="text-end text-success fw-semibold">122.4%</td><td class="text-end best-cell">0.42% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.34% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end ">0.9951</td><td class="text-end font-monospace ">46.9 MB</td><td class="text-end font-monospace ">1.26s</td></tr>
+<tr><td><span class="rank-badge rank-n">#5</span> <span class="pkg-badge badge-sky">sae (eblupFH, REML)</span></td><td class="text-end text-success fw-semibold">122.4%</td><td class="text-end best-cell">0.42% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.34% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end ">0.9951</td><td class="text-end font-monospace ">3.2 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr>
+<tr><td><span class="rank-badge rank-n">#6</span> <span class="pkg-badge badge-indigo">hbsae (fSAE.Area, Hierarchical Bayes)</span></td><td class="text-end text-success fw-semibold">122.1%</td><td class="text-end best-cell">0.42% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.34% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end ">0.9951</td><td class="text-end font-monospace ">8.5 MB</td><td class="text-end font-monospace ">0.03s</td></tr>
+<tr><td><span class="rank-badge rank-n">#7</span> <span class="pkg-badge badge-purple">fastsaegpu (merf_area, ML-Random Forest)</span></td><td class="text-end text-body">100.8%</td><td class="text-end ">0.47%</td><td class="text-end ">0.38%</td><td class="text-end ">0.9940</td><td class="text-end font-monospace ">36.7 MB</td><td class="text-end font-monospace ">0.31s</td></tr>
+<tr><td><span class="rank-badge rank-n">#8</span> <span class="pkg-badge badge-gray">survey (direct, Taylor)</span></td><td class="text-end text-body">100.0%</td><td class="text-end ">0.47%</td><td class="text-end ">0.38%</td><td class="text-end ">0.9940</td><td class="text-end font-monospace ">0.0 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr></tbody></table></div>
+          </div>
+          <div class="card-footer bg-transparent border-top py-2 px-3 d-flex justify-content-between align-items-center text-muted small">
+            <span><i class="fa-solid fa-circle-info me-1"></i><span data-i18n="dgp_label">Struktur DGP:</span> <span class="dgp-text" data-en="Area random effects generated via simultaneous autoregressive SAR (rho = 0.65) over Queen matrix." data-id="Efek acak area dibangkitkan dari proses SAR autoregresif (rho = 0.65) dengan matriks Queen.">Efek acak area dibangkitkan dari proses SAR autoregresif (rho = 0.65) dengan matriks Queen.</span></span>
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-crown text-warning me-1"></i><span data-i18n="best_legend">Nilai terbaik ditandai hijau</span></span>
+          </div>
+        </div>
+      </div>
+<div class="tab-pane fade " id="pane-ds06-panel" role="tabpanel">
+        <div class="card dataset-card mb-4">
+          <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace">ds06-panel</span>
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill badge-meta" data-en="Panel D=50 x T=5" data-id="Panel D=50 x T=5">Panel D=50 x T=5</span>
+              </div>
+              <h4 class="h5 fw-bold mb-0 text-title" data-en="Panel Spatio-Temporal" data-id="Panel Spasio-Temporal">Panel Spasio-Temporal</h4>
+            </div>
+            <div class="text-end">
+              <span class="text-muted small"><i class="fa-solid fa-bullseye text-warning me-1"></i><span data-i18n="benchmark_goal">Fokus Pengujian:</span></span>
+              <p class="text-body-secondary small mb-0 challenge-text" data-en="Dynamic temporal filters and longitudinal borrowing of strength across time and space." data-id="Filter dinamik temporal dan peminjaman kekuatan melintasi ruang dan waktu.">Filter dinamik temporal dan peminjaman kekuatan melintasi ruang dan waktu.</p>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive"><table class="table table-hover align-middle mb-0 benchmark-table"><thead><tr class="table-header-row text-uppercase small"><th data-i18n="col_model">Model / Package</th><th class="text-end" data-i18n="col_releff">Rel. Efficiency (%)</th><th class="text-end" data-i18n="col_rrmse">RRMSE (%)</th><th class="text-end" data-i18n="col_arb">ARB (%)</th><th class="text-end" data-i18n="col_corr">Corr</th><th class="text-end" data-i18n="col_ram">Peak RAM</th><th class="text-end" data-i18n="col_runtime">Runtime</th></tr></thead><tbody><tr><td><span class="rank-badge rank-1"><i class="fa-solid fa-crown text-warning"></i> #1</span> <span class="pkg-badge badge-purple">fastsaegpu (hb_area, GPU-MCMC)</span></td><td class="text-end best-cell">111.0% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.47% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.37% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9914 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">28.7 MB</td><td class="text-end font-monospace ">20.26s</td></tr>
+<tr><td><span class="rank-badge rank-2">#2</span> <span class="pkg-badge badge-blue">fastsae (eblup_fh, REML)</span></td><td class="text-end text-success fw-semibold">110.6%</td><td class="text-end best-cell">0.47% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.37% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9914 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace best-cell">0.4 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr>
+<tr><td><span class="rank-badge rank-3">#3</span> <span class="pkg-badge badge-blue">fastsae (hb_area, INLA)</span></td><td class="text-end text-success fw-semibold">110.6%</td><td class="text-end best-cell">0.47% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.37% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9914 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">51.5 MB</td><td class="text-end font-monospace ">1.31s</td></tr>
+<tr><td><span class="rank-badge rank-n">#4</span> <span class="pkg-badge badge-indigo">hbsae (fSAE.Area, Hierarchical Bayes)</span></td><td class="text-end text-success fw-semibold">110.6%</td><td class="text-end best-cell">0.47% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.37% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9914 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">8.5 MB</td><td class="text-end font-monospace ">0.07s</td></tr>
+<tr><td><span class="rank-badge rank-n">#5</span> <span class="pkg-badge badge-sky">sae (eblupFH, REML)</span></td><td class="text-end text-success fw-semibold">110.6%</td><td class="text-end best-cell">0.47% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.37% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9914 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">3.2 MB</td><td class="text-end font-monospace ">0.04s</td></tr>
+<tr><td><span class="rank-badge rank-n">#6</span> <span class="pkg-badge badge-purple">fastsaegpu (merf_area, ML-Random Forest)</span></td><td class="text-end text-body">103.9%</td><td class="text-end ">0.49%</td><td class="text-end ">0.38%</td><td class="text-end ">0.9909</td><td class="text-end font-monospace ">52.1 MB</td><td class="text-end font-monospace ">1.17s</td></tr>
+<tr><td><span class="rank-badge rank-n">#7</span> <span class="pkg-badge badge-gray">survey (direct, Taylor)</span></td><td class="text-end text-body">100.0%</td><td class="text-end ">0.50%</td><td class="text-end ">0.39%</td><td class="text-end ">0.9908</td><td class="text-end font-monospace ">0.0 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr></tbody></table></div>
+          </div>
+          <div class="card-footer bg-transparent border-top py-2 px-3 d-flex justify-content-between align-items-center text-muted small">
+            <span><i class="fa-solid fa-circle-info me-1"></i><span data-i18n="dgp_label">Struktur DGP:</span> <span class="dgp-text" data-en="Repeated survey panel across 5 survey rounds with AR(1) autocorrelation (phi = 0.70)." data-id="Panel survei berulang 5 putaran dengan autokorelasi temporal AR(1) (phi = 0.70).">Panel survei berulang 5 putaran dengan autokorelasi temporal AR(1) (phi = 0.70).</span></span>
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-crown text-warning me-1"></i><span data-i18n="best_legend">Nilai terbaik ditandai hijau</span></span>
+          </div>
+        </div>
+      </div>
+<div class="tab-pane fade " id="pane-ds07-outliers" role="tabpanel">
+        <div class="card dataset-card mb-4">
+          <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace">ds07-outliers</span>
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill badge-meta" data-en="Robust Huber SAE" data-id="Robust Huber SAE">Robust Huber SAE</span>
+              </div>
+              <h4 class="h5 fw-bold mb-0 text-title" data-en="Extreme Outliers" data-id="Outlier Ekstrem">Outlier Ekstrem</h4>
+            </div>
+            <div class="text-end">
+              <span class="text-muted small"><i class="fa-solid fa-bullseye text-warning me-1"></i><span data-i18n="benchmark_goal">Fokus Pengujian:</span></span>
+              <p class="text-body-secondary small mb-0 challenge-text" data-en="Verifies robust M-estimation, Huber EBLUP (saeRobust), and heavy-tailed shrinkage." data-id="Menguji estimasi M-robust, Huber EBLUP (saeRobust), dan ketahanan terhadap leverage.">Menguji estimasi M-robust, Huber EBLUP (saeRobust), dan ketahanan terhadap leverage.</p>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive"><table class="table table-hover align-middle mb-0 benchmark-table"><thead><tr class="table-header-row text-uppercase small"><th data-i18n="col_model">Model / Package</th><th class="text-end" data-i18n="col_releff">Rel. Efficiency (%)</th><th class="text-end" data-i18n="col_rrmse">RRMSE (%)</th><th class="text-end" data-i18n="col_arb">ARB (%)</th><th class="text-end" data-i18n="col_corr">Corr</th><th class="text-end" data-i18n="col_outlier_rrmse">Outlier RRMSE</th><th class="text-end" data-i18n="col_ram">Peak RAM</th><th class="text-end" data-i18n="col_runtime">Runtime</th></tr></thead><tbody><tr><td><span class="rank-badge rank-1"><i class="fa-solid fa-crown text-warning"></i> #1</span> <span class="pkg-badge badge-amber">saeRobust (rfh, Robust Huber)</span></td><td class="text-end best-cell">107.7% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.57% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.46% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9945 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.27% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">18.0 MB</td><td class="text-end font-monospace ">0.13s</td></tr>
+<tr><td><span class="rank-badge rank-2">#2</span> <span class="pkg-badge badge-blue">fastsae (hb_area, INLA)</span></td><td class="text-end text-body">103.2%</td><td class="text-end ">0.58%</td><td class="text-end best-cell">0.46% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end ">0.9943</td><td class="text-end ">0.28%</td><td class="text-end font-monospace ">46.8 MB</td><td class="text-end font-monospace ">1.20s</td></tr>
+<tr><td><span class="rank-badge rank-3">#3</span> <span class="pkg-badge badge-blue">fastsae (eblup_fh, REML)</span></td><td class="text-end text-body">103.1%</td><td class="text-end ">0.58%</td><td class="text-end best-cell">0.46% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end ">0.9943</td><td class="text-end ">0.28%</td><td class="text-end font-monospace ">0.3 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr>
+<tr><td><span class="rank-badge rank-n">#4</span> <span class="pkg-badge badge-indigo">hbsae (fSAE.Area, Hierarchical Bayes)</span></td><td class="text-end text-body">103.1%</td><td class="text-end ">0.58%</td><td class="text-end best-cell">0.46% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end ">0.9943</td><td class="text-end best-cell">0.27% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">8.5 MB</td><td class="text-end font-monospace ">0.02s</td></tr>
+<tr><td><span class="rank-badge rank-n">#5</span> <span class="pkg-badge badge-sky">sae (eblupFH, REML)</span></td><td class="text-end text-body">103.1%</td><td class="text-end ">0.58%</td><td class="text-end best-cell">0.46% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end ">0.9943</td><td class="text-end ">0.28%</td><td class="text-end font-monospace ">3.2 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr>
+<tr><td><span class="rank-badge rank-n">#6</span> <span class="pkg-badge badge-purple">fastsaegpu (hb_area, GPU-MCMC)</span></td><td class="text-end text-body">103.0%</td><td class="text-end ">0.58%</td><td class="text-end best-cell">0.46% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end ">0.9943</td><td class="text-end best-cell">0.27% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">28.6 MB</td><td class="text-end font-monospace ">9.93s</td></tr>
+<tr><td><span class="rank-badge rank-n">#7</span> <span class="pkg-badge badge-purple">fastsaegpu (merf_area, ML-Random Forest)</span></td><td class="text-end text-body">102.9%</td><td class="text-end ">0.58%</td><td class="text-end best-cell">0.46% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end ">0.9944</td><td class="text-end ">0.30%</td><td class="text-end font-monospace ">36.8 MB</td><td class="text-end font-monospace ">0.32s</td></tr>
+<tr><td><span class="rank-badge rank-n">#8</span> <span class="pkg-badge badge-gray">survey (direct, Taylor)</span></td><td class="text-end text-body">100.0%</td><td class="text-end ">0.59%</td><td class="text-end ">0.47%</td><td class="text-end ">0.9943</td><td class="text-end ">0.36%</td><td class="text-end font-monospace best-cell">0.1 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr></tbody></table></div>
+          </div>
+          <div class="card-footer bg-transparent border-top py-2 px-3 d-flex justify-content-between align-items-center text-muted small">
+            <span><i class="fa-solid fa-circle-info me-1"></i><span data-i18n="dgp_label">Struktur DGP:</span> <span class="dgp-text" data-en="Contaminated response generating 4 disaster shock districts with +/- 8 sigma outlier shocks." data-id="Data terkontaminasi dengan 4 kabupaten syok bencana (+/- 8 sigma dari tren regresi).">Data terkontaminasi dengan 4 kabupaten syok bencana (+/- 8 sigma dari tren regresi).</span></span>
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-crown text-warning me-1"></i><span data-i18n="best_legend">Nilai terbaik ditandai hijau</span></span>
+          </div>
+        </div>
+      </div>
+<div class="tab-pane fade " id="pane-ds08-nested" role="tabpanel">
+        <div class="card dataset-card mb-4">
+          <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace">ds08-nested</span>
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill badge-meta" data-en="Two-Fold Subarea" data-id="Dua Tingkat Bersarang">Dua Tingkat Bersarang</span>
+              </div>
+              <h4 class="h5 fw-bold mb-0 text-title" data-en="Nested Hierarchy" data-id="Hierarki Bersarang">Hierarki Bersarang</h4>
+            </div>
+            <div class="text-end">
+              <span class="text-muted small"><i class="fa-solid fa-bullseye text-warning me-1"></i><span data-i18n="benchmark_goal">Fokus Pengujian:</span></span>
+              <p class="text-body-secondary small mb-0 challenge-text" data-en="Multi-level borrowing of strength across multiple administrative tiers." data-id="Peminjaman kekuatan bertingkat antartingkat administrasi wilayah.">Peminjaman kekuatan bertingkat antartingkat administrasi wilayah.</p>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive"><table class="table table-hover align-middle mb-0 benchmark-table"><thead><tr class="table-header-row text-uppercase small"><th data-i18n="col_model">Model / Package</th><th class="text-end" data-i18n="col_releff">Rel. Efficiency (%)</th><th class="text-end" data-i18n="col_rrmse">RRMSE (%)</th><th class="text-end" data-i18n="col_arb">ARB (%)</th><th class="text-end" data-i18n="col_corr">Corr</th><th class="text-end" data-i18n="col_ram">Peak RAM</th><th class="text-end" data-i18n="col_runtime">Runtime</th></tr></thead><tbody><tr><td><span class="rank-badge rank-1"><i class="fa-solid fa-crown text-warning"></i> #1</span> <span class="pkg-badge badge-indigo">hbsae (fSAE.Area, Hierarchical Bayes)</span></td><td class="text-end best-cell">102.3% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.45% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.36% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9934 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">8.5 MB</td><td class="text-end font-monospace ">0.03s</td></tr>
+<tr><td><span class="rank-badge rank-2">#2</span> <span class="pkg-badge badge-blue">fastsae (eblup_fh, REML)</span></td><td class="text-end text-body">102.1%</td><td class="text-end best-cell">0.45% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.36% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9934 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace best-cell">0.3 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr>
+<tr><td><span class="rank-badge rank-3">#3</span> <span class="pkg-badge badge-sky">sae (eblupFH, REML)</span></td><td class="text-end text-body">102.1%</td><td class="text-end best-cell">0.45% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.36% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9934 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">3.2 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr>
+<tr><td><span class="rank-badge rank-n">#4</span> <span class="pkg-badge badge-blue">fastsae (hb_area, INLA)</span></td><td class="text-end text-body">102.0%</td><td class="text-end ">0.46%</td><td class="text-end best-cell">0.36% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9934 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">46.7 MB</td><td class="text-end font-monospace ">1.25s</td></tr>
+<tr><td><span class="rank-badge rank-n">#5</span> <span class="pkg-badge badge-purple">fastsaegpu (merf_area, ML-Random Forest)</span></td><td class="text-end text-body">101.7%</td><td class="text-end ">0.46%</td><td class="text-end best-cell">0.36% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9934 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">36.8 MB</td><td class="text-end font-monospace ">0.31s</td></tr>
+<tr><td><span class="rank-badge rank-n">#6</span> <span class="pkg-badge badge-purple">fastsaegpu (hb_area, GPU-MCMC)</span></td><td class="text-end text-body">101.3%</td><td class="text-end ">0.46%</td><td class="text-end best-cell">0.36% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9933 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">28.5 MB</td><td class="text-end font-monospace ">6.39s</td></tr>
+<tr><td><span class="rank-badge rank-n">#7</span> <span class="pkg-badge badge-gray">survey (direct, Taylor)</span></td><td class="text-end text-body">100.0%</td><td class="text-end ">0.46%</td><td class="text-end best-cell">0.36% <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end best-cell">0.9934 <i class="fa-solid fa-star text-emerald ms-1 small"></i></td><td class="text-end font-monospace ">0.0 MB</td><td class="text-end font-monospace best-cell">0.00s</td></tr></tbody></table></div>
+          </div>
+          <div class="card-footer bg-transparent border-top py-2 px-3 d-flex justify-content-between align-items-center text-muted small">
+            <span><i class="fa-solid fa-circle-info me-1"></i><span data-i18n="dgp_label">Struktur DGP:</span> <span class="dgp-text" data-en="Hierarchical structure with districts (kabupaten) nested inside administrative provinces." data-id="Struktur bertingkat kabupaten bersarang dalam provinsi administratif (v_p + u_pd).">Struktur bertingkat kabupaten bersarang dalam provinsi administratif (v_p + u_pd).</span></span>
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-crown text-warning me-1"></i><span data-i18n="best_legend">Nilai terbaik ditandai hijau</span></span>
+          </div>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- Sampling Methodology Section (Moved from Hero) -->
+    <section class="mb-5">
+      <div class="methodology-box">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <i class="fa-solid fa-graduation-cap text-primary fs-5"></i>
+          <h3 class="h5 fw-bold mb-0" data-i18n="methodology_title">Metodologi Sampling & Ground Truth</h3>
+        </div>
+        <p class="text-muted small mb-3" data-i18n="methodology_desc">
+          Seluruh benchmark dibangun di atas kerangka kerja <strong>Two-Stage Stratified Cluster Sampling</strong> yang mengadopsi standar Survei Sosial Ekonomi Nasional (Susenas) Badan Pusat Statistik (BPS) Indonesia, dievaluasi terhadap nilai murni <em>Ground Truth</em> populasi sintetis (~120.000 rumah tangga).
+        </p>
+
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="p-3 rounded bg-body-tertiary border h-100">
+              <h6 class="fw-bold mb-1"><span class="badge bg-primary rounded-circle me-1">1</span> <span data-i18n="stage1_title">Tahap 1: Pemilihan Blok Sensus (PSU)</span></h6>
+              <p class="text-muted small mb-2" data-i18n="stage1_desc">
+                Stratifikasi perkotaan/perdesaan di setiap kabupaten. Pemilihan Blok Sensus (BS) dilakukan dengan <em>Probability Proportional to Size (PPS)</em> tanpa pengembalian berdasarkan jumlah rumah tangga.
+              </p>
+              <div class="font-monospace text-primary small py-1 px-2 bg-body rounded border">
+                &pi;<sub>1,dhi</sub> = a<sub>dh</sub> &times; (M<sub>dhi</sub> / &sum; M<sub>dhk</sub>)
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="p-3 rounded bg-body-tertiary border h-100">
+              <h6 class="fw-bold mb-1"><span class="badge bg-info rounded-circle me-1">2</span> <span data-i18n="stage2_title">Tahap 2: Pemilihan Rumah Tangga (SSU)</span></h6>
+              <p class="text-muted small mb-2" data-i18n="stage2_desc">
+                Sampling sistematik tepat 10 rumah tangga per BS terpilih dengan awalan acak (<em>random start</em>). Peluang inklusi bersyarat:
+              </p>
+              <div class="font-monospace text-info small py-1 px-2 bg-body rounded border">
+                &pi;<sub>2|1,dhij</sub> = 10 / M<sub>dhi</sub>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="p-3 rounded bg-body-tertiary border h-100">
+              <h6 class="fw-bold mb-1"><span class="badge bg-success rounded-circle me-1">3</span> <span data-i18n="stage3_title">Penimbang & Varians Taylor</span></h6>
+              <p class="text-muted small mb-2" data-i18n="stage3_desc">
+                Bobot kalibrasi FWT memperhitungkan klastering. Varians sampling &psi;<sub>d</sub> dihitung via Taylor Series Linearization (<code>survey::svydesign</code>), menghasilkan efek desain realistis (<em>Deff &gt; 1</em>).
+              </p>
+              <div class="font-monospace text-success small py-1 px-2 bg-body rounded border">
+                w<sub>dhij</sub> = M<sub>dh</sub> / (10 a<sub>dh</sub>)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
   </main>
 
   <!-- Footer -->
-  <footer class="py-4 border-top border-secondary border-opacity-25 text-center text-secondary small">
+  <footer class="py-4 border-top text-center text-muted small">
     <div class="container-xl">
-      <p class="mb-1"><strong>SAE Benchmark Lab</strong> &bull; Badan Pusat Statistik (BPS) Two-Stage Cluster Sampling Testbed</p>
-      <p class="mb-0 text-muted font-monospace">Generated automatically on 2026-10-04 05:28:02 UTC</p>
+      <p class="mb-1"><strong>SAE Benchmark Lab</strong> &bull; <span data-i18n="footer_title">Laboratorium Tolok Ukur Model Small Area Estimation</span></p>
+      <p class="mb-0 font-monospace">Generated automatically on 2026-10-04 06:18:00 UTC</p>
     </div>
   </footer>
+
+  <!-- Embedded Benchmark Data -->
+  <script>
+    const benchmarkData = [{"dataset_id":"ds01_continuous_linear","dataset_code":"ds01-linear","dataset_name_en":"Linear Baseline","dataset_name_id":"Linier Baseline","model":"fastsae (eblup_fh, REML)","package":"fastsae","RelEff":111.3,"RRMSE":0.38,"ARB":0.31,"Runtime":0.02,"RAM":2},{"dataset_id":"ds01_continuous_linear","dataset_code":"ds01-linear","dataset_name_en":"Linear Baseline","dataset_name_id":"Linier Baseline","model":"fastsae (hb_area, INLA)","package":"fastsae","RelEff":111.3,"RRMSE":0.38,"ARB":0.31,"Runtime":1.92,"RAM":136.8},{"dataset_id":"ds01_continuous_linear","dataset_code":"ds01-linear","dataset_name_en":"Linear Baseline","dataset_name_id":"Linier Baseline","model":"hbsae (fSAE.Area, Hierarchical Bayes)","package":"hbsae","RelEff":111.3,"RRMSE":0.38,"ARB":0.31,"Runtime":0.12,"RAM":8.5},{"dataset_id":"ds01_continuous_linear","dataset_code":"ds01-linear","dataset_name_en":"Linear Baseline","dataset_name_id":"Linier Baseline","model":"sae (eblupFH, REML)","package":"sae","RelEff":111.3,"RRMSE":0.38,"ARB":0.31,"Runtime":0,"RAM":3.2},{"dataset_id":"ds01_continuous_linear","dataset_code":"ds01-linear","dataset_name_en":"Linear Baseline","dataset_name_id":"Linier Baseline","model":"fastsaegpu (hb_area, GPU-MCMC)","package":"fastsaegpu","RelEff":110.9,"RRMSE":0.38,"ARB":0.31,"Runtime":14.04,"RAM":160},{"dataset_id":"ds01_continuous_linear","dataset_code":"ds01-linear","dataset_name_en":"Linear Baseline","dataset_name_id":"Linier Baseline","model":"fastsaegpu (merf_area, ML-Random Forest)","package":"fastsaegpu","RelEff":101.9,"RRMSE":0.4,"ARB":0.32,"Runtime":0.36,"RAM":44.6},{"dataset_id":"ds01_continuous_linear","dataset_code":"ds01-linear","dataset_name_en":"Linear Baseline","dataset_name_id":"Linier Baseline","model":"survey (direct, Taylor)","package":"survey","RelEff":100,"RRMSE":0.41,"ARB":0.32,"Runtime":0,"RAM":0},{"dataset_id":"ds02_bounded_rate","dataset_code":"ds02-rate","dataset_name_en":"Bounded Rate (0,1)","dataset_name_id":"Tingkat Bounded (0,1)","model":"tipsae (fit_sae, Beta Stan HMC)","package":"tipsae","RelEff":156.6,"RRMSE":23.46,"ARB":18.25,"Runtime":1.42,"RAM":185},{"dataset_id":"ds02_bounded_rate","dataset_code":"ds02-rate","dataset_name_en":"Bounded Rate (0,1)","dataset_name_id":"Tingkat Bounded (0,1)","model":"hbsae (fSAE.Area, Hierarchical Bayes)","package":"hbsae","RelEff":120.5,"RRMSE":29.33,"ARB":20.8,"Runtime":0.04,"RAM":8.5},{"dataset_id":"ds02_bounded_rate","dataset_code":"ds02-rate","dataset_name_en":"Bounded Rate (0,1)","dataset_name_id":"Tingkat Bounded (0,1)","model":"fastsaegpu (merf_area, ML-Random Forest)","package":"fastsaegpu","RelEff":119.6,"RRMSE":34.91,"ARB":23.62,"Runtime":0.32,"RAM":41},{"dataset_id":"ds02_bounded_rate","dataset_code":"ds02-rate","dataset_name_en":"Bounded Rate (0,1)","dataset_name_id":"Tingkat Bounded (0,1)","model":"fastsae (hb_area, INLA)","package":"fastsae","RelEff":119.3,"RRMSE":29.2,"ARB":20.7,"Runtime":1.22,"RAM":51},{"dataset_id":"ds02_bounded_rate","dataset_code":"ds02-rate","dataset_name_en":"Bounded Rate (0,1)","dataset_name_id":"Tingkat Bounded (0,1)","model":"fastsae (eblup_fh, REML)","package":"fastsae","RelEff":118.1,"RRMSE":29.15,"ARB":20.71,"Runtime":0,"RAM":3.6},{"dataset_id":"ds02_bounded_rate","dataset_code":"ds02-rate","dataset_name_en":"Bounded Rate (0,1)","dataset_name_id":"Tingkat Bounded (0,1)","model":"fastsaegpu (hb_area, GPU-MCMC)","package":"fastsaegpu","RelEff":117.5,"RRMSE":29.15,"ARB":20.63,"Runtime":6.41,"RAM":39.2},{"dataset_id":"ds02_bounded_rate","dataset_code":"ds02-rate","dataset_name_en":"Bounded Rate (0,1)","dataset_name_id":"Tingkat Bounded (0,1)","model":"survey (direct, Taylor)","package":"survey","RelEff":100,"RRMSE":36.16,"ARB":24.67,"Runtime":0,"RAM":0.5},{"dataset_id":"ds03_highdim_sparse","dataset_code":"ds03-sparse","dataset_name_en":"High-Dim Sparse","dataset_name_id":"Dimensi Tinggi (Sparse)","model":"fastsae (eblup_fh, REML)","package":"fastsae","RelEff":111.1,"RRMSE":0.53,"ARB":0.43,"Runtime":0,"RAM":1},{"dataset_id":"ds03_highdim_sparse","dataset_code":"ds03-sparse","dataset_name_en":"High-Dim Sparse","dataset_name_id":"Dimensi Tinggi (Sparse)","model":"fastsae (hb_area, INLA)","package":"fastsae","RelEff":111.1,"RRMSE":0.53,"ARB":0.43,"Runtime":1.28,"RAM":60.5},{"dataset_id":"ds03_highdim_sparse","dataset_code":"ds03-sparse","dataset_name_en":"High-Dim Sparse","dataset_name_id":"Dimensi Tinggi (Sparse)","model":"sae (eblupFH, REML)","package":"sae","RelEff":111.1,"RRMSE":0.53,"ARB":0.43,"Runtime":0,"RAM":3.2},{"dataset_id":"ds03_highdim_sparse","dataset_code":"ds03-sparse","dataset_name_en":"High-Dim Sparse","dataset_name_id":"Dimensi Tinggi (Sparse)","model":"hbsae (fSAE.Area, Hierarchical Bayes)","package":"hbsae","RelEff":111,"RRMSE":0.53,"ARB":0.43,"Runtime":0.06,"RAM":8.5},{"dataset_id":"ds03_highdim_sparse","dataset_code":"ds03-sparse","dataset_name_en":"High-Dim Sparse","dataset_name_id":"Dimensi Tinggi (Sparse)","model":"fastsaegpu (hb_area, GPU-MCMC)","package":"fastsaegpu","RelEff":110.6,"RRMSE":0.53,"ARB":0.43,"Runtime":9.52,"RAM":29.2},{"dataset_id":"ds03_highdim_sparse","dataset_code":"ds03-sparse","dataset_name_en":"High-Dim Sparse","dataset_name_id":"Dimensi Tinggi (Sparse)","model":"survey (direct, Taylor)","package":"survey","RelEff":100,"RRMSE":0.56,"ARB":0.46,"Runtime":0,"RAM":0},{"dataset_id":"ds03_highdim_sparse","dataset_code":"ds03-sparse","dataset_name_en":"High-Dim Sparse","dataset_name_id":"Dimensi Tinggi (Sparse)","model":"fastsaegpu (merf_area, ML-Random Forest)","package":"fastsaegpu","RelEff":99.7,"RRMSE":0.56,"ARB":0.46,"Runtime":0.23,"RAM":21.9},{"dataset_id":"ds04_nonlinear_interaction","dataset_code":"ds04-nonlinear","dataset_name_en":"Nonlinear Complex","dataset_name_id":"Nonlinier Kompleks","model":"fastsaegpu (merf_area, ML-Random Forest)","package":"fastsaegpu","RelEff":101.2,"RRMSE":0.57,"ARB":0.44,"Runtime":0.38,"RAM":38.4},{"dataset_id":"ds04_nonlinear_interaction","dataset_code":"ds04-nonlinear","dataset_name_en":"Nonlinear Complex","dataset_name_id":"Nonlinier Kompleks","model":"survey (direct, Taylor)","package":"survey","RelEff":100,"RRMSE":0.57,"ARB":0.45,"Runtime":0,"RAM":0},{"dataset_id":"ds04_nonlinear_interaction","dataset_code":"ds04-nonlinear","dataset_name_en":"Nonlinear Complex","dataset_name_id":"Nonlinier Kompleks","model":"fastsae (eblup_fh, REML)","package":"fastsae","RelEff":99.3,"RRMSE":0.58,"ARB":0.45,"Runtime":0,"RAM":0.4},{"dataset_id":"ds04_nonlinear_interaction","dataset_code":"ds04-nonlinear","dataset_name_en":"Nonlinear Complex","dataset_name_id":"Nonlinier Kompleks","model":"hbsae (fSAE.Area, Hierarchical Bayes)","package":"hbsae","RelEff":99.3,"RRMSE":0.58,"ARB":0.45,"Runtime":0.02,"RAM":8.5},{"dataset_id":"ds04_nonlinear_interaction","dataset_code":"ds04-nonlinear","dataset_name_en":"Nonlinear Complex","dataset_name_id":"Nonlinier Kompleks","model":"sae (eblupFH, REML)","package":"sae","RelEff":99.3,"RRMSE":0.58,"ARB":0.45,"Runtime":0,"RAM":3.2},{"dataset_id":"ds04_nonlinear_interaction","dataset_code":"ds04-nonlinear","dataset_name_en":"Nonlinear Complex","dataset_name_id":"Nonlinier Kompleks","model":"fastsae (hb_area, INLA)","package":"fastsae","RelEff":99.2,"RRMSE":0.58,"ARB":0.45,"Runtime":1.33,"RAM":48},{"dataset_id":"ds04_nonlinear_interaction","dataset_code":"ds04-nonlinear","dataset_name_en":"Nonlinear Complex","dataset_name_id":"Nonlinier Kompleks","model":"fastsaegpu (hb_area, GPU-MCMC)","package":"fastsaegpu","RelEff":98.8,"RRMSE":0.58,"ARB":0.45,"Runtime":18.88,"RAM":28.7},{"dataset_id":"ds05_spatial_correlated","dataset_code":"ds05-spatial","dataset_name_en":"Spatial SAR","dataset_name_id":"Spasial SAR","model":"sae (eblupSFH, Spatial SAR)","package":"sae","RelEff":126.4,"RRMSE":0.42,"ARB":0.34,"Runtime":0.03,"RAM":12},{"dataset_id":"ds05_spatial_correlated","dataset_code":"ds05-spatial","dataset_name_en":"Spatial SAR","dataset_name_id":"Spasial SAR","model":"fastsaegpu (hb_area, GPU-MCMC)","package":"fastsaegpu","RelEff":123.4,"RRMSE":0.42,"ARB":0.34,"Runtime":6.25,"RAM":28.7},{"dataset_id":"ds05_spatial_correlated","dataset_code":"ds05-spatial","dataset_name_en":"Spatial SAR","dataset_name_id":"Spasial SAR","model":"fastsae (eblup_fh, REML)","package":"fastsae","RelEff":122.4,"RRMSE":0.42,"ARB":0.34,"Runtime":0,"RAM":0.4},{"dataset_id":"ds05_spatial_correlated","dataset_code":"ds05-spatial","dataset_name_en":"Spatial SAR","dataset_name_id":"Spasial SAR","model":"fastsae (hb_area, INLA)","package":"fastsae","RelEff":122.4,"RRMSE":0.42,"ARB":0.34,"Runtime":1.26,"RAM":46.9},{"dataset_id":"ds05_spatial_correlated","dataset_code":"ds05-spatial","dataset_name_en":"Spatial SAR","dataset_name_id":"Spasial SAR","model":"sae (eblupFH, REML)","package":"sae","RelEff":122.4,"RRMSE":0.42,"ARB":0.34,"Runtime":0,"RAM":3.2},{"dataset_id":"ds05_spatial_correlated","dataset_code":"ds05-spatial","dataset_name_en":"Spatial SAR","dataset_name_id":"Spasial SAR","model":"hbsae (fSAE.Area, Hierarchical Bayes)","package":"hbsae","RelEff":122.1,"RRMSE":0.42,"ARB":0.34,"Runtime":0.03,"RAM":8.5},{"dataset_id":"ds05_spatial_correlated","dataset_code":"ds05-spatial","dataset_name_en":"Spatial SAR","dataset_name_id":"Spasial SAR","model":"fastsaegpu (merf_area, ML-Random Forest)","package":"fastsaegpu","RelEff":100.8,"RRMSE":0.47,"ARB":0.38,"Runtime":0.31,"RAM":36.7},{"dataset_id":"ds05_spatial_correlated","dataset_code":"ds05-spatial","dataset_name_en":"Spatial SAR","dataset_name_id":"Spasial SAR","model":"survey (direct, Taylor)","package":"survey","RelEff":100,"RRMSE":0.47,"ARB":0.38,"Runtime":0,"RAM":0},{"dataset_id":"ds06_spatiotemporal_panel","dataset_code":"ds06-panel","dataset_name_en":"Panel Spatio-Temporal","dataset_name_id":"Panel Spasio-Temporal","model":"fastsaegpu (hb_area, GPU-MCMC)","package":"fastsaegpu","RelEff":111,"RRMSE":0.47,"ARB":0.37,"Runtime":20.26,"RAM":28.7},{"dataset_id":"ds06_spatiotemporal_panel","dataset_code":"ds06-panel","dataset_name_en":"Panel Spatio-Temporal","dataset_name_id":"Panel Spasio-Temporal","model":"fastsae (eblup_fh, REML)","package":"fastsae","RelEff":110.6,"RRMSE":0.47,"ARB":0.37,"Runtime":0,"RAM":0.4},{"dataset_id":"ds06_spatiotemporal_panel","dataset_code":"ds06-panel","dataset_name_en":"Panel Spatio-Temporal","dataset_name_id":"Panel Spasio-Temporal","model":"fastsae (hb_area, INLA)","package":"fastsae","RelEff":110.6,"RRMSE":0.47,"ARB":0.37,"Runtime":1.31,"RAM":51.5},{"dataset_id":"ds06_spatiotemporal_panel","dataset_code":"ds06-panel","dataset_name_en":"Panel Spatio-Temporal","dataset_name_id":"Panel Spasio-Temporal","model":"hbsae (fSAE.Area, Hierarchical Bayes)","package":"hbsae","RelEff":110.6,"RRMSE":0.47,"ARB":0.37,"Runtime":0.07,"RAM":8.5},{"dataset_id":"ds06_spatiotemporal_panel","dataset_code":"ds06-panel","dataset_name_en":"Panel Spatio-Temporal","dataset_name_id":"Panel Spasio-Temporal","model":"sae (eblupFH, REML)","package":"sae","RelEff":110.6,"RRMSE":0.47,"ARB":0.37,"Runtime":0.04,"RAM":3.2},{"dataset_id":"ds06_spatiotemporal_panel","dataset_code":"ds06-panel","dataset_name_en":"Panel Spatio-Temporal","dataset_name_id":"Panel Spasio-Temporal","model":"fastsaegpu (merf_area, ML-Random Forest)","package":"fastsaegpu","RelEff":103.9,"RRMSE":0.49,"ARB":0.38,"Runtime":1.17,"RAM":52.1},{"dataset_id":"ds06_spatiotemporal_panel","dataset_code":"ds06-panel","dataset_name_en":"Panel Spatio-Temporal","dataset_name_id":"Panel Spasio-Temporal","model":"survey (direct, Taylor)","package":"survey","RelEff":100,"RRMSE":0.5,"ARB":0.39,"Runtime":0,"RAM":0},{"dataset_id":"ds07_extreme_outliers","dataset_code":"ds07-outliers","dataset_name_en":"Extreme Outliers","dataset_name_id":"Outlier Ekstrem","model":"saeRobust (rfh, Robust Huber)","package":"saeRobust","RelEff":107.7,"RRMSE":0.57,"ARB":0.46,"Runtime":0.13,"RAM":18},{"dataset_id":"ds07_extreme_outliers","dataset_code":"ds07-outliers","dataset_name_en":"Extreme Outliers","dataset_name_id":"Outlier Ekstrem","model":"fastsae (hb_area, INLA)","package":"fastsae","RelEff":103.2,"RRMSE":0.58,"ARB":0.46,"Runtime":1.2,"RAM":46.8},{"dataset_id":"ds07_extreme_outliers","dataset_code":"ds07-outliers","dataset_name_en":"Extreme Outliers","dataset_name_id":"Outlier Ekstrem","model":"fastsae (eblup_fh, REML)","package":"fastsae","RelEff":103.1,"RRMSE":0.58,"ARB":0.46,"Runtime":0,"RAM":0.3},{"dataset_id":"ds07_extreme_outliers","dataset_code":"ds07-outliers","dataset_name_en":"Extreme Outliers","dataset_name_id":"Outlier Ekstrem","model":"hbsae (fSAE.Area, Hierarchical Bayes)","package":"hbsae","RelEff":103.1,"RRMSE":0.58,"ARB":0.46,"Runtime":0.02,"RAM":8.5},{"dataset_id":"ds07_extreme_outliers","dataset_code":"ds07-outliers","dataset_name_en":"Extreme Outliers","dataset_name_id":"Outlier Ekstrem","model":"sae (eblupFH, REML)","package":"sae","RelEff":103.1,"RRMSE":0.58,"ARB":0.46,"Runtime":0,"RAM":3.2},{"dataset_id":"ds07_extreme_outliers","dataset_code":"ds07-outliers","dataset_name_en":"Extreme Outliers","dataset_name_id":"Outlier Ekstrem","model":"fastsaegpu (hb_area, GPU-MCMC)","package":"fastsaegpu","RelEff":103,"RRMSE":0.58,"ARB":0.46,"Runtime":9.93,"RAM":28.6},{"dataset_id":"ds07_extreme_outliers","dataset_code":"ds07-outliers","dataset_name_en":"Extreme Outliers","dataset_name_id":"Outlier Ekstrem","model":"fastsaegpu (merf_area, ML-Random Forest)","package":"fastsaegpu","RelEff":102.9,"RRMSE":0.58,"ARB":0.46,"Runtime":0.32,"RAM":36.8},{"dataset_id":"ds07_extreme_outliers","dataset_code":"ds07-outliers","dataset_name_en":"Extreme Outliers","dataset_name_id":"Outlier Ekstrem","model":"survey (direct, Taylor)","package":"survey","RelEff":100,"RRMSE":0.59,"ARB":0.47,"Runtime":0,"RAM":0.1},{"dataset_id":"ds08_nested_subarea","dataset_code":"ds08-nested","dataset_name_en":"Nested Hierarchy","dataset_name_id":"Hierarki Bersarang","model":"hbsae (fSAE.Area, Hierarchical Bayes)","package":"hbsae","RelEff":102.3,"RRMSE":0.45,"ARB":0.36,"Runtime":0.03,"RAM":8.5},{"dataset_id":"ds08_nested_subarea","dataset_code":"ds08-nested","dataset_name_en":"Nested Hierarchy","dataset_name_id":"Hierarki Bersarang","model":"fastsae (eblup_fh, REML)","package":"fastsae","RelEff":102.1,"RRMSE":0.45,"ARB":0.36,"Runtime":0,"RAM":0.3},{"dataset_id":"ds08_nested_subarea","dataset_code":"ds08-nested","dataset_name_en":"Nested Hierarchy","dataset_name_id":"Hierarki Bersarang","model":"sae (eblupFH, REML)","package":"sae","RelEff":102.1,"RRMSE":0.45,"ARB":0.36,"Runtime":0,"RAM":3.2},{"dataset_id":"ds08_nested_subarea","dataset_code":"ds08-nested","dataset_name_en":"Nested Hierarchy","dataset_name_id":"Hierarki Bersarang","model":"fastsae (hb_area, INLA)","package":"fastsae","RelEff":102,"RRMSE":0.46,"ARB":0.36,"Runtime":1.25,"RAM":46.7},{"dataset_id":"ds08_nested_subarea","dataset_code":"ds08-nested","dataset_name_en":"Nested Hierarchy","dataset_name_id":"Hierarki Bersarang","model":"fastsaegpu (merf_area, ML-Random Forest)","package":"fastsaegpu","RelEff":101.7,"RRMSE":0.46,"ARB":0.36,"Runtime":0.31,"RAM":36.8},{"dataset_id":"ds08_nested_subarea","dataset_code":"ds08-nested","dataset_name_en":"Nested Hierarchy","dataset_name_id":"Hierarki Bersarang","model":"fastsaegpu (hb_area, GPU-MCMC)","package":"fastsaegpu","RelEff":101.3,"RRMSE":0.46,"ARB":0.36,"Runtime":6.39,"RAM":28.5},{"dataset_id":"ds08_nested_subarea","dataset_code":"ds08-nested","dataset_name_en":"Nested Hierarchy","dataset_name_id":"Hierarki Bersarang","model":"survey (direct, Taylor)","package":"survey","RelEff":100,"RRMSE":0.46,"ARB":0.36,"Runtime":0,"RAM":0}];
+  </script>
 
   <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.datatables.net/2.0.2/js/dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/2.0.2/js/dataTables.bootstrap5.min.js"></script>
 
   <script>
-    $(document).ready(function() {
-      var table = $('#leaderboardTable').DataTable({
-        pageLength: 25,
-        lengthMenu: [[10, 25, 40, -1], [10, 25, 40, "All"]],
-        order: [[0, "asc"], [4, "desc"]],
-        language: {
-          search: "_INPUT_",
-          searchPlaceholder: "Search models, datasets..."
-        },
-        dom: '<"d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3"lf>rt<"d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"ip>'
-      });
+    // Bilingual Dictionary
+    const translations = {
+      id: {
+        page_title: "SAE Benchmark Lab | Evaluasi Model Small Area Estimation",
+        hero_subtitle: "Tolok ukur terstandar evaluasi model Small Area Estimation (SAE) terhadap Ground Truth populasi murni dengan metrik akurasi, efisiensi relatif, dan latensi komputasi.",
+        kpi_total_models: "Total Model",
+        kpi_datasets: "Arketipe Data",
+        kpi_top_gain: "Efisiensi Maksimal",
+        kpi_fastest: "Model Tercepat",
+        kpi_lowest_ram: "Hemat Memori",
+        chart_section_title: "Visualisasi Interaktif Trade-Off Model",
+        chart_section_subtitle: "Eksplorasi hubungan waktu komputasi versus akurasi dan efisiensi relatif model",
+        filter_dataset: "Pilih Dataset:",
+        opt_all_datasets: "Semua Dataset",
+        chart_scatter_title: "Runtime vs Efisiensi Relatif (Pareto Frontier)",
+        chart_scatter_badge: "Makin ke atas & kiri makin unggul",
+        chart_bar_title: "Perbandingan Efisiensi Relatif (%)",
+        chart_bar_badge: "Baseline Direct = 100%",
+        table_section_title: "Tabel Evaluasi Model per Dataset",
+        table_section_subtitle: "Setiap dataset menguji tantangan terpisah; nilai terbaik per metrik diberi highlight sel hijau.",
+        col_model: "Model / Package",
+        col_releff: "Efisiensi Relatif (%)",
+        col_rrmse: "RRMSE (%)",
+        col_arb: "ARB (%)",
+        col_corr: "Korelasi",
+        col_ram: "RAM Puncak",
+        col_runtime: "Waktu Eksekusi",
+        col_outlier_rrmse: "RRMSE Outlier",
+        col_violations: "Pelanggaran Batas (&lt;0 / &gt;1)",
+        benchmark_goal: "Fokus Pengujian:",
+        dgp_label: "Struktur DGP:",
+        best_legend: "Nilai terbaik ditandai hijau",
+        methodology_title: "Metodologi Sampling & Ground Truth",
+        methodology_desc: "Seluruh benchmark dibangun di atas kerangka kerja Two-Stage Stratified Cluster Sampling yang mengadopsi standar Survei Sosial Ekonomi Nasional (Susenas) Badan Pusat Statistik (BPS) Indonesia, dievaluasi terhadap nilai murni Ground Truth populasi sintetis (~120.000 rumah tangga).",
+        stage1_title: "Tahap 1: Pemilihan Blok Sensus (PSU)",
+        stage1_desc: "Stratifikasi perkotaan/perdesaan di setiap kabupaten. Pemilihan Blok Sensus (BS) dilakukan dengan Probability Proportional to Size (PPS) tanpa pengembalian berdasarkan jumlah rumah tangga.",
+        stage2_title: "Tahap 2: Pemilihan Rumah Tangga (SSU)",
+        stage2_desc: "Sampling sistematik tepat 10 rumah tangga per BS terpilih dengan awalan acak (random start).",
+        stage3_title: "Tahap 3: Penimbang & Varians Taylor",
+        stage3_desc: "Bobot kalibrasi FWT memperhitungkan klastering. Varians sampling dihitung via Taylor Series Linearization (survey::svydesign), menghasilkan efek desain realistis (Deff > 1).",
+        footer_title: "Laboratorium Tolok Ukur Model Small Area Estimation"
+      },
+      en: {
+        page_title: "SAE Benchmark Lab | Small Area Estimation Benchmark",
+        hero_subtitle: "A standardized testbed evaluating Small Area Estimation (SAE) models against exact finite population Ground Truth with accuracy, relative efficiency, and computational latency metrics.",
+        kpi_total_models: "Total Models",
+        kpi_datasets: "Data Archetypes",
+        kpi_top_gain: "Top RelEff Gain",
+        kpi_fastest: "Fastest Model",
+        kpi_lowest_ram: "Lowest Memory",
+        chart_section_title: "Interactive Model Trade-Off Visualizations",
+        chart_section_subtitle: "Explore computational time versus accuracy and relative efficiency curves",
+        filter_dataset: "Select Dataset:",
+        opt_all_datasets: "All Datasets",
+        chart_scatter_title: "Runtime vs Relative Efficiency (Pareto Frontier)",
+        chart_scatter_badge: "Top-left indicates superior trade-off",
+        chart_bar_title: "Relative Efficiency (%) Comparison",
+        chart_bar_badge: "Direct Estimator Baseline = 100%",
+        table_section_title: "Model Leaderboard by Dataset",
+        table_section_subtitle: "Each dataset tests distinct structural challenges; top metric performers highlighted in soft green.",
+        col_model: "Model / Package",
+        col_releff: "Rel. Efficiency (%)",
+        col_rrmse: "RRMSE (%)",
+        col_arb: "ARB (%)",
+        col_corr: "Correlation",
+        col_ram: "Peak RAM",
+        col_runtime: "Runtime",
+        col_outlier_rrmse: "Outlier RRMSE",
+        col_violations: "Boundary Violations (&lt;0 / &gt;1)",
+        benchmark_goal: "Benchmark Goal:",
+        dgp_label: "DGP Architecture:",
+        best_legend: "Best value highlighted in green",
+        methodology_title: "Sampling Methodology & Ground Truth",
+        methodology_desc: "All benchmark datasets are constructed from a synthetic finite population (~120,000 households) under Two-Stage Stratified Cluster Sampling mimicking national statistical survey standards (e.g. BPS Susenas).",
+        stage1_title: "Stage 1: Primary Sampling Unit (PSU)",
+        stage1_desc: "Stratified by Urban/Rural within each district. Census Blocks selected via Probability Proportional to Size (PPS) without replacement based on household counts.",
+        stage2_title: "Stage 2: Secondary Sampling Unit (SSU)",
+        stage2_desc: "Systematic sampling of exactly 10 households per sampled Census Block with a random start.",
+        stage3_title: "Stage 3: Weights & Taylor Linearization",
+        stage3_desc: "Design weights calibrated for cluster effects. Direct variance estimated via Taylor Series Linearization (survey::svydesign), capturing realistic clustering (Deff > 1).",
+        footer_title: "Small Area Estimation Model Benchmark Laboratory"
+      }
+    };
 
-      $('#datasetFilter').on('change', function() {
-        var val = $(this).val();
-        table.column(0).search(val ? val : '', true, false).draw();
-      });
+    let currentLang = localStorage.getItem("sae_lab_lang") || "id";
+    let currentTheme = localStorage.getItem("sae_lab_theme") || "light";
 
-      $('#modelFilter').on('change', function() {
-        var val = $(this).val();
-        table.column(1).search(val ? val : '', true, false).draw();
-      });
+    // Set Initial Theme
+    function applyTheme(theme) {
+      document.documentElement.setAttribute("data-bs-theme", theme);
+      const icon = document.getElementById("themeIcon");
+      if (theme === "dark") {
+        icon.className = "fa-solid fa-sun text-warning";
+      } else {
+        icon.className = "fa-solid fa-moon";
+      }
+      localStorage.setItem("sae_lab_theme", theme);
+      updateChartsTheme();
+    }
 
-      $('#resetFiltersBtn').on('click', function() {
-        $('#datasetFilter').val('');
-        $('#modelFilter').val('');
-        table.search('').columns().search('').draw();
-      });
+    // Toggle Theme
+    document.getElementById("themeToggleBtn").addEventListener("click", () => {
+      const active = document.documentElement.getAttribute("data-bs-theme");
+      applyTheme(active === "dark" ? "light" : "dark");
     });
 
-    function copyCode(id, btn) {
-      var el = document.getElementById(id);
-      var text = el.innerText || el.textContent;
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(function() {
-          showCopied(btn);
-        }).catch(function() {
-          fallbackCopy(text, btn);
+    // Language Toggle
+    function applyLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem("sae_lab_lang", lang);
+      document.getElementById("langText").innerText = lang === "id" ? "EN" : "ID";
+      document.title = translations[lang].page_title;
+
+      // Update text nodes with data-i18n
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (translations[lang] && translations[lang][key]) {
+          el.innerHTML = translations[lang][key];
+        }
+      });
+
+      // Update elements with data-en and data-id
+      document.querySelectorAll("[data-en][data-id]").forEach(el => {
+        el.innerHTML = (lang === "id") ? el.getAttribute("data-id") : el.getAttribute("data-en");
+      });
+
+      // Update Tab Names
+      document.querySelectorAll(".tab-name").forEach(el => {
+        el.innerText = (lang === "id") ? el.getAttribute("data-name-id") : el.getAttribute("data-name-en");
+      });
+
+      updateCharts();
+    }
+
+    document.getElementById("langToggleBtn").addEventListener("click", () => {
+      applyLanguage(currentLang === "id" ? "en" : "id");
+    });
+
+    // Colors mapping for packages
+    const packageColors = {
+      "fastsaegpu": "#8b5cf6",
+      "fastsae": "#2563eb",
+      "tipsae": "#0d9488",
+      "hbsae": "#4f46e5",
+      "sae": "#0284c7",
+      "saeRobust": "#d97706",
+      "survey": "#64748b"
+    };
+
+    // Chart.js instances
+    let scatterChart = null;
+    let barChart = null;
+
+    function getChartThemeColors() {
+      const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+      return {
+        gridColor: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)",
+        textColor: isDark ? "#9ca3af" : "#64748b",
+        baselineColor: isDark ? "rgba(239, 68, 68, 0.6)" : "rgba(239, 68, 68, 0.7)"
+      };
+    }
+
+    function initCharts() {
+      const tc = getChartThemeColors();
+
+      // Scatter Chart
+      const ctxScatter = document.getElementById("scatterChart").getContext("2d");
+      scatterChart = new Chart(ctxScatter, {
+        type: "scatter",
+        data: { datasets: [] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 400 },
+          scales: {
+            x: {
+              type: "logarithmic",
+              title: {
+                display: true,
+                text: currentLang === "id" ? "Waktu Eksekusi (detik, log scale)" : "Runtime (seconds, log scale)",
+                color: tc.textColor
+              },
+              grid: { color: tc.gridColor },
+              ticks: {
+                color: tc.textColor,
+                callback: function(val) {
+                  return val + "s";
+                }
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: currentLang === "id" ? "Efisiensi Relatif (%)" : "Relative Efficiency (%)",
+                color: tc.textColor
+              },
+              grid: { color: tc.gridColor },
+              ticks: { color: tc.textColor }
+            }
+          },
+          plugins: {
+            legend: {
+              position: "top",
+              labels: {
+                boxWidth: 10,
+                color: tc.textColor,
+                font: { size: 11 }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  const pt = ctx.raw;
+                  return [
+                    pt.model,
+                    (currentLang === "id" ? "Dataset: " : "Dataset: ") + pt.dsName,
+                    (currentLang === "id" ? "Efisiensi: " : "Rel. Efficiency: ") + pt.y.toFixed(1) + "%",
+                    "RRMSE: " + pt.rrmse.toFixed(2) + "%",
+                    (currentLang === "id" ? "Waktu: " : "Time: ") + pt.x.toFixed(2) + "s",
+                    "RAM: " + pt.ram.toFixed(1) + " MB"
+                  ];
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Bar Chart
+      const ctxBar = document.getElementById("barChart").getContext("2d");
+      barChart = new Chart(ctxBar, {
+        type: "bar",
+        data: { labels: [], datasets: [] },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 400 },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: currentLang === "id" ? "Efisiensi Relatif (%)" : "Relative Efficiency (%)",
+                color: tc.textColor
+              },
+              grid: { color: tc.gridColor },
+              ticks: { color: tc.textColor }
+            },
+            y: {
+              grid: { display: false },
+              ticks: { color: tc.textColor, font: { size: 10 } }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  return (currentLang === "id" ? "Efisiensi: " : "Efficiency: ") + ctx.raw.toFixed(1) + "%";
+                }
+              }
+            }
+          }
+        }
+      });
+
+      updateCharts();
+    }
+
+    function updateCharts() {
+      if (!scatterChart || !barChart) return;
+      const selectedDs = document.getElementById("chartDatasetSelect").value;
+      const tc = getChartThemeColors();
+
+      const filtered = (selectedDs === "ALL")
+        ? benchmarkData
+        : benchmarkData.filter(d => d.dataset_id === selectedDs);
+
+      const pkgGroups = {};
+      filtered.forEach(d => {
+        if (!pkgGroups[d.package]) pkgGroups[d.package] = [];
+        pkgGroups[d.package].push({
+          x: Math.max(0.005, d.Runtime),
+          y: d.RelEff,
+          model: d.model,
+          dsName: (currentLang === "id" ? d.dataset_name_id : d.dataset_name_en),
+          rrmse: d.RRMSE,
+          ram: d.RAM
         });
+      });
+
+      const scatterDatasets = Object.keys(pkgGroups).map(pkg => ({
+        label: pkg,
+        data: pkgGroups[pkg],
+        backgroundColor: packageColors[pkg] || "#64748b",
+        borderColor: packageColors[pkg] || "#64748b",
+        pointRadius: 6,
+        pointHoverRadius: 8
+      }));
+
+      scatterChart.data.datasets = scatterDatasets;
+      scatterChart.options.scales.x.title.text = currentLang === "id" ? "Waktu Eksekusi (detik, log scale)" : "Runtime (seconds, log scale)";
+      scatterChart.options.scales.y.title.text = currentLang === "id" ? "Efisiensi Relatif (%)" : "Relative Efficiency (%)";
+      scatterChart.update();
+
+      let barItems = [];
+      if (selectedDs === "ALL") {
+        const modelMap = {};
+        filtered.forEach(d => {
+          if (!modelMap[d.model]) modelMap[d.model] = { sum: 0, count: 0, pkg: d.package };
+          modelMap[d.model].sum += d.RelEff;
+          modelMap[d.model].count += 1;
+        });
+        barItems = Object.keys(modelMap).map(m => ({
+          model: m,
+          eff: modelMap[m].sum / modelMap[m].count,
+          pkg: modelMap[m].pkg
+        })).sort((a, b) => b.eff - a.eff);
       } else {
-        fallbackCopy(text, btn);
+        barItems = filtered.map(d => ({
+          model: d.model,
+          eff: d.RelEff,
+          pkg: d.package
+        })).sort((a, b) => b.eff - a.eff);
       }
+
+      barChart.data.labels = barItems.map(d => d.model.replace(/ \(.+\)/, ""));
+      barChart.data.datasets = [{
+        label: "RelEff",
+        data: barItems.map(d => d.eff),
+        backgroundColor: barItems.map(d => (packageColors[d.pkg] || "#64748b") + "cc"),
+        borderColor: barItems.map(d => packageColors[d.pkg] || "#64748b"),
+        borderWidth: 1,
+        borderRadius: 4
+      }];
+      barChart.options.scales.x.title.text = currentLang === "id" ? "Efisiensi Relatif (%)" : "Relative Efficiency (%)";
+      barChart.update();
     }
 
-    function showCopied(btn) {
-      if (!btn) return;
-      var origHtml = btn.innerHTML;
-      btn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> Copied!';
-      btn.classList.add('btn-success');
-      btn.classList.remove('btn-outline-secondary');
-      setTimeout(function() {
-        btn.innerHTML = origHtml;
-        btn.classList.remove('btn-success');
-        btn.classList.add('btn-outline-secondary');
-      }, 2000);
+    function updateChartsTheme() {
+      if (!scatterChart || !barChart) return;
+      const tc = getChartThemeColors();
+      
+      scatterChart.options.scales.x.grid.color = tc.gridColor;
+      scatterChart.options.scales.x.ticks.color = tc.textColor;
+      scatterChart.options.scales.y.grid.color = tc.gridColor;
+      scatterChart.options.scales.y.ticks.color = tc.textColor;
+      scatterChart.options.plugins.legend.labels.color = tc.textColor;
+      scatterChart.update();
+
+      barChart.options.scales.x.grid.color = tc.gridColor;
+      barChart.options.scales.x.ticks.color = tc.textColor;
+      barChart.options.scales.y.ticks.color = tc.textColor;
+      barChart.update();
     }
 
-    function fallbackCopy(text, btn) {
-      var textArea = document.createElement("textarea");
-      textArea.value = text;
-      textArea.style.position = "fixed";
-      textArea.style.left = "-999999px";
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      try {
-        document.execCommand("copy");
-        showCopied(btn);
-      } catch (err) {
-        console.error("Fallback copy failed", err);
-      }
-      document.body.removeChild(textArea);
-    }
+    document.getElementById("chartDatasetSelect").addEventListener("change", updateCharts);
+
+    // Initialize Page
+    document.addEventListener("DOMContentLoaded", () => {
+      applyTheme(currentTheme);
+      applyLanguage(currentLang);
+      initCharts();
+    });
   </script>
 </body>
 </html>
