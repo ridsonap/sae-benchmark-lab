@@ -11,7 +11,7 @@ sae-benchmark-lab/
 ├── R/                            # 📦 saebenchmark package (sumber utama)
 │   ├── metrics.R                 # calculate_sae_metrics()
 │   ├── datasets.R                # list_datasets(), default_formula()
-│   ├── benchmark.R               # benchmark_sae(), read_leaderboard()
+│   ├── benchmark.R               # rank_model(), read_leaderboard()
 │   └── web.R                     # update_web()
 ├── datasets/                     # Standardized benchmark datasets (.rds & .csv)
 │   ├── datasets_manifest.csv     # Metadata catalog of all 8 datasets
@@ -100,8 +100,9 @@ my_model <- function(ds, formula_str) {
 }
 
 # 2. Benchmark + masuk leaderboard + refresh web
-benchmark_sae(my_model, "mymodel (lm, v1)", dataset_ids = NULL)  # NULL = semua 8 dataset
-# benchmark_sae(my_model, "mymodel (lm, v1)", dataset_ids = "ds01")  # 1 dataset saja
+rank_model(my_model, "mymodel (lm, v1)", dataset_ids = NULL)  # NULL = semua 8 dataset
+# rank_model(my_model, "mymodel (lm, v1)", dataset_ids = "ds01")  # 1 dataset saja
+# (nama lama benchmark_sae() tetap bisa dipakai sebagai alias)
 
 # 3. Lihat web minimalis
 # Buka docs/index.html di browser, atau serve: python3 -m http.server --directory docs 8000

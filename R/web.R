@@ -3,7 +3,7 @@
 #' Writes `docs/leaderboard.json` from `results/master_leaderboard.csv` and
 #' (re)writes the minimal `docs/index.html` shell that renders it. The HTML
 #' is static and small; all tables/charts are rendered client-side from the
-#' JSON, so each `benchmark_sae()` run only needs to update the JSON.
+#' JSON, so each `rank_model()` run only needs to update the JSON.
 #'
 #' @param leaderboard_path path to master_leaderboard.csv
 #' @param output_dir path to results/ (used to resolve leaderboard_path)
@@ -154,35 +154,80 @@ footer{margin-top:18px;font-size:12px;color:var(--mut);text-align:center}
   </div>
 
   <div class="grid2">
-    <div class="box"><h3>RRMSE per model (%) — makin kecil makin baik</h3><p id="chartSub"></p><canvas id="bar" height="220"></canvas></div>
-    <div class="box"><h3>Waktu vs RelEff — atas-kiri = unggul</h3><p>Sumbu-x log (detik). Hover untuk nama model.</p><canvas id="scat" height="220"></canvas></div>
+    <div class="box">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+        <h3 id="barTitle">RRMSE per model (%)</h3>
+        <select id="barMetric" style="background:var(--bg);border:1px solid var(--line);color:var(--tx);border-radius:8px;padding:6px 10px;font-size:12.5px">
+          <option value="RRMSE_pct">RRMSE (%)</option>
+          <option value="ARB_pct">ARB (%)</option>
+          <option value="RelEff_pct">RelEff (%)</option>
+          <option value="Corr">Corr</option>
+          <option value="Runtime_sec">Waktu (detik)</option>
+        </select>
+      </div>
+      <p id="chartSub"></p><canvas id="bar" height="220"></canvas>
+    </div>
+    <div class="box">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+        <h3>Waktu vs RelEff</h3>
+        <select id="scatScale" style="background:var(--bg);border:1px solid var(--line);color:var(--tx);border-radius:8px;padding:6px 10px;font-size:12.5px">
+          <option value="logarithmic">Skala log</option>
+          <option value="linear">Skala linear</option>
+        </select>
+      </div>
+      <p>Atas-kiri = unggul. Hover untuk nama model.</p><canvas id="scat" height="220"></canvas>
+    </div>
+  </div>
+
+  <div class="box" style="margin-top:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+      <h3>Jejak model lintas 8 dataset</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select id="trackModel" style="background:var(--bg);border:1px solid var(--line);color:var(--tx);border-radius:8px;padding:6px 10px;font-size:12.5px;max-width:280px"></select>
+        <select id="trackMetric" style="background:var(--bg);border:1px solid var(--line);color:var(--tx);border-radius:8px;padding:6px 10px;font-size:12.5px">
+          <option value="RelEff_pct">RelEff (%)</option>
+          <option value="RRMSE_pct">RRMSE (%)</option>
+        </select>
+      </div>
+    </div>
+    <p id="trackSub">Bandingkan satu model (garis biru) vs Direct (garis abu, baseline 100% untuk RelEff) di semua arketipe.</p>
+    <div style="position:relative;height:260px"><canvas id="track"></canvas></div>
   </div>
 
   <details><summary>Metodologi singkat</summary>
     <p>Populasi sintetis ±120rb rumah tangga. Sampling <b>two-stage stratified cluster</b> ala Susenas BPS: (1) Blok Sensus via PPS per strata kota/desa, (2) 10 rumah tangga via sistematik. Direct + varians via linearisasi Taylor (<span class="mono">survey::svydesign</span>, Deff&gt;1). Ground truth = agregat populasi penuh.</p>
     <p>Metrik: <b>RRMSE</b> = akar rata-rata squared relative error; <b>ARB</b> = rata-rata absolute relative bias; <b>RelEff</b> = MSE(Direct)/MSE(Model)×100 (&gt;100% = lebih efisien dari Direct); <b>Corr</b> = korelasi Pearson vs truth.</p>
-    <p>Cara menambah model (R): <span class="mono">source(&quot;R/metrics.R&quot;); source(&quot;R/datasets.R&quot;); source(&quot;R/benchmark.R&quot;); source(&quot;R/web.R&quot;); benchmark_sae(fn_saya, &quot;modelku (pkg, v1)&quot;)</span>. Fungsi menerima <span class="mono">(ds, formula_str)</span> dan mengembalikan vektor numerik sepanjang <span class="mono">nrow(ds)</span>.</p>
+    <p>Cara menambah model (R): <span class="mono">source(&quot;R/metrics.R&quot;); source(&quot;R/datasets.R&quot;); source(&quot;R/benchmark.R&quot;); source(&quot;R/web.R&quot;); rank_model(fn_saya, &quot;modelku (pkg, v1)&quot;)</span>. Fungsi menerima <span class="mono">(ds, formula_str)</span> dan mengembalikan vektor numerik sepanjang <span class="mono">nrow(ds)</span>.</p>
   </details>
 
   <footer>SAE Benchmark Lab · minimal leaderboard · data dari <span class="mono">results/master_leaderboard.csv</span></footer>
 </div>
 <script>
-let DB=null, cur=null, bar=null, scat=null;
+let DB=null, cur=null, bar=null, scat=null, track=null;
 const $=id=>document.getElementById(id);
+const METRICS={RRMSE_pct:{label:"RRMSE (%)",fmt:v=>v.toFixed(2)+"%",low:true,color:"#2563eb"},ARB_pct:{label:"ARB (%)",fmt:v=>v.toFixed(2)+"%",low:true,color:"#7c3aed"},RelEff_pct:{label:"RelEff (%)",fmt:v=>v.toFixed(1)+"%",low:false,color:"#059669"},Corr:{label:"Corr",fmt:v=>v.toFixed(4),low:false,color:"#0891b2"},Runtime_sec:{label:"Waktu (detik)",fmt:v=>v.toFixed(3)+"s",low:true,color:"#ea580c"}};
 fetch("leaderboard.json").then(r=>r.json()).then(db=>{
   DB=db; $("updated").textContent="Terakhir diperbarui: "+db.updated;
   const ids=Object.keys(db.datasets);
   $("kDs").textContent=ids.length;
-  $("kModels").textContent=new Set(db.rows.map(r=>r.model)).size;
+  const models=[...new Set(db.rows.map(r=>r.model))].sort();
+  $("kModels").textContent=models.length;
   const ok=db.rows.filter(r=>r.RelEff_pct!=null);
   if(ok.length){const b=ok.reduce((a,b)=>a.RelEff_pct>b.RelEff_pct?a:b);$("kEff").textContent=b.RelEff_pct.toFixed(1)+"%";$("kEffSub").textContent=b.model.slice(0,34);}
   const rr=db.rows.filter(r=>r.RRMSE_pct!=null);
   if(rr.length){const b=rr.reduce((a,b)=>a.RRMSE_pct<b.RRMSE_pct?a:b);$("kRrmse").textContent=b.RRMSE_pct.toFixed(2)+"%";$("kRrmseSub").textContent=(db.datasets[b.dataset_id]?.short||b.dataset_id)+" · "+b.model.slice(0,24);}
   const tabs=$("tabs"); tabs.innerHTML="";
   ids.forEach((id,i)=>{const m=db.datasets[id];const b=document.createElement("button");b.className="tab"+(i===0?" on":"");b.innerHTML=`<b class="mono">${m.code}</b> <small>${m.short}</small>`;b.onclick=()=>{cur=id;[...tabs.children].forEach(x=>x.classList.remove("on"));b.classList.add("on");render();};tabs.appendChild(b);});
-  cur=ids[0]; render();
+  cur=ids[0];
+  const tm=$("trackModel"); tm.innerHTML=models.map(m=>`<option>${m}</option>`).join("");
+  const guess=models.find(m=>/fastsae.*eblup_fh.*REML[^,]*$/.test(m))||models.find(m=>/fastsae/i.test(m))||models[0];
+  if(guess)tm.value=guess;
+  render(); drawTrack();
 });
 $("q").addEventListener("input",render); $("sort").addEventListener("change",render);
+$("barMetric").addEventListener("change",()=>render());
+$("scatScale").addEventListener("change",()=>render());
+$("trackModel").addEventListener("change",drawTrack); $("trackMetric").addEventListener("change",drawTrack);
 $("themeBtn").onclick=()=>{const h=document.documentElement;h.dataset.theme=h.dataset.theme==="dark"?"":"dark";};
 function render(){
   if(!DB||!cur)return;
@@ -211,11 +256,28 @@ function render(){
   drawCharts(rows);
 }
 function drawCharts(rows){
+  const mkey=$("barMetric").value, M=METRICS[mkey];
   const labels=rows.map(r=>r.model.length>22?r.model.slice(0,22)+"…":r.model);
   if(bar)bar.destroy(); if(scat)scat.destroy();
-  $("chartSub").textContent=(DB.datasets[cur].short)+" · "+rows.length+" model";
-  bar=new Chart($("bar"),{type:"bar",data:{labels,datasets:[{data:rows.map(r=>r.RRMSE_pct),backgroundColor:"#2563eb",borderRadius:5}]},options:{indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{beginAtZero:true}}}});
-  scat=new Chart($("scat"),{type:"scatter",data:{datasets:[{data:rows.filter(r=>r.Runtime_sec!=null&&r.RelEff_pct!=null).map(r=>({x:Math.max(r.Runtime_sec,1e-3),y:r.RelEff_pct,label:r.model})),backgroundColor:"#059669"}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>" "+c.raw.label+" — "+c.raw.y.toFixed(1)+"% / "+c.raw.x.toFixed(3)+"s"}}},scales:{x:{type:"logarithmic",title:{display:true,text:"detik (log)"}},y:{title:{display:true,text:"RelEff (%)"}}}}});
+  $("barTitle").textContent=M.label+" per model"+(M.low?" — makin kecil makin baik":" — makin besar makin baik");
+  $("chartSub").textContent=(DB.datasets[cur].short)+" · "+rows.length+" model · "+M.label;
+  bar=new Chart($("bar"),{type:"bar",data:{labels,datasets:[{data:rows.map(r=>r[mkey]),backgroundColor:M.color,borderRadius:5}]},options:{indexAxis:"y",plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>" "+(c.raw==null?"–":M.fmt(c.raw))}}}},scales:{x:{beginAtZero:mkey!=="Corr"}}});
+  const xs=$("scatScale").value;
+  scat=new Chart($("scat"),{type:"scatter",data:{datasets:[{data:rows.filter(r=>r.Runtime_sec!=null&&r.RelEff_pct!=null).map(r=>({x:Math.max(r.Runtime_sec,1e-3),y:r.RelEff_pct,label:r.model})),backgroundColor:"#059669"}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>" "+c.raw.label+" — "+c.raw.y.toFixed(1)+"% / "+c.raw.x.toFixed(3)+"s"}}},scales:{x:{type:xs,title:{display:true,text:xs==="logarithmic"?"detik (log)":"detik"}},y:{title:{display:true,text:"RelEff (%)"}}}}});
+}
+function drawTrack(){
+  if(!DB)return;
+  const model=$("trackModel").value, mkey=$("trackMetric").value, M=METRICS[mkey];
+  const ids=Object.keys(DB.datasets), cl=DB.datasets;
+  const val=(ds,mo)=>{const r=DB.rows.find(r=>r.dataset_id===ds&&r.model===mo);return r?r[mkey]:null;};
+  const series=ids.map(id=>val(id,model));
+  const direct=ids.map(id=>val(id,"survey (direct, Taylor)"));
+  if(track)track.destroy();
+  $("trackSub").textContent=model+" · "+M.label+" di 8 arketipe (vs Direct).";
+  track=new Chart($("track"),{type:"line",data:{labels:ids.map(id=>cl[id].code),datasets:[
+    {label:model.length>30?model.slice(0,30)+"…":model,data:series,borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.12)",fill:true,tension:.3,spanGaps:true,pointRadius:4},
+    {label:"Direct (baseline)",data:direct,borderColor:"#94a3b8",borderDash:[6,4],tension:.3,spanGaps:true,pointRadius:3}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{boxWidth:14,font:{size:11}}}},scales:{y:{title:{display:true,text:M.label}}}}});
 }
 </script>
 </body>

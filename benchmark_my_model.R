@@ -20,7 +20,7 @@ my_model <- function(ds, formula_str) {
 # --- 2. Jalankan benchmark (ubah dataset_ids sesuai kebutuhan) ---
 # dataset_ids = NULL  -> semua 8 dataset
 # dataset_ids = "ds01" -> fuzzy match ke ds01_continuous_linear
-res <- benchmark_sae(
+res <- rank_model(
   model_fn = my_model,
   model_name = "demo (lm, v1)",
   dataset_ids = c("ds01_continuous_linear", "ds02_bounded_rate")

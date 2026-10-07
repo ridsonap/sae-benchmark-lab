@@ -1,4 +1,4 @@
-#' Benchmark one SAE model across one or more datasets
+#' Rank one SAE model across one or more datasets
 #'
 #' This is the single entry point of the package. Give it any model function
 #' with signature `function(ds, formula_str)` returning a numeric vector of
@@ -6,6 +6,8 @@
 #' scored against ground truth, merged into
 #' `results/master_leaderboard.csv`, and optionally pushed to the web
 #' leaderboard (`docs/leaderboard.json` + timestamp refresh).
+#'
+#' `benchmark_sae()` remains available as an alias for backward compatibility.
 #'
 #' @param model_fn function(ds, formula_str, ...) -> numeric vector
 #' @param model_name display name, e.g. "mymodel (my_fn, v1)". Used as
@@ -25,9 +27,9 @@
 #'   fit <- lm(as.formula(formula_str), data = ds)
 #'   as.numeric(predict(fit, newdata = ds))
 #' }
-#' benchmark_sae(my_model, "demo (lm, v1)", dataset_ids = "ds01_continuous_linear")
+#' rank_model(my_model, "demo (lm, v1)", dataset_ids = "ds01_continuous_linear")
 #' }
-benchmark_sae <- function(model_fn,
+rank_model <- function(model_fn,
                           model_name,
                           dataset_ids = NULL,
                           formulas = NULL,
@@ -133,6 +135,10 @@ benchmark_sae <- function(model_fn,
 
   invisible(merged[merged$model == model_name, , drop = FALSE])
 }
+
+#' Alias of [rank_model()] for backward compatibility
+#' @export
+benchmark_sae <- rank_model
 
 #' Read current leaderboard
 #' @param output_dir path to results/

@@ -3,7 +3,7 @@
 #' Cara baru (disarankan, 3 baris):
 #'   source("R/metrics.R"); source("R/datasets.R")
 #'   source("R/benchmark.R"); source("R/web.R")
-#'   benchmark_sae(my_custom_sae_model, "MyModel (pkg, v1)", dataset_ids = NULL)
+#'   rank_model(my_custom_sae_model, "MyModel (pkg, v1)", dataset_ids = NULL)
 #'
 #' Hasil otomatis masuk results/master_leaderboard.csv + docs/leaderboard.json
 #' dan tampil di docs/index.html per dataset.
@@ -15,7 +15,7 @@
 #' source("models/custom_model_template.R")
 #' source("R/metrics.R"); source("R/datasets.R")
 #' source("R/benchmark.R"); source("R/web.R")
-#' benchmark_sae(my_custom_sae_model, "MyCustomModel (custom, v1)")
+#' rank_model(my_custom_sae_model, "MyCustomModel (custom, v1)")
 
 my_custom_sae_model <- function(ds, formula_str, ...) {
   # 1. ds contains:
