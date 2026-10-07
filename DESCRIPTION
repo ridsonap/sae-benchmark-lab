@@ -1,0 +1,18 @@
+Package: saebenchmark
+Title: Standardised Benchmark for Small Area Estimation (SAE) Models
+Version: 0.1.0
+Authors@R: person("SAE Benchmark Lab", email = "sae@example.com", role = c("aut", "cre"))
+Description: One-function benchmark for SAE models against BPS two-stage
+    finite-population ground truth. Computes ARB, RRMSE, RelEff, Corr,
+    runtime and RAM, merges results into results/master_leaderboard.csv,
+    and refreshes the minimal web leaderboard in docs/.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
+Imports:
+    jsonlite,
+    utils
+Suggests:
+    dplyr
+RVersion: 4.1.0

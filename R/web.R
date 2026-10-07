@@ -1,4 +1,77 @@
-<!DOCTYPE html>
+#' Refresh web leaderboard (minimal site)
+#'
+#' Writes `docs/leaderboard.json` from `results/master_leaderboard.csv` and
+#' (re)writes the minimal `docs/index.html` shell that renders it. The HTML
+#' is static and small; all tables/charts are rendered client-side from the
+#' JSON, so each `benchmark_sae()` run only needs to update the JSON.
+#'
+#' @param leaderboard_path path to master_leaderboard.csv
+#' @param output_dir path to results/ (used to resolve leaderboard_path)
+#' @param root project root (used to resolve docs/)
+#' @param docs_dir path to docs/
+#' @param verbose logical
+#' @return invisible list with json + html paths
+#' @export
+update_web <- function(leaderboard_path = file.path(output_dir, "master_leaderboard.csv"),
+                       output_dir = file.path(find_root(), "results"),
+                       root = find_root(),
+                       docs_dir = file.path(root, "docs"),
+                       verbose = TRUE) {
+  if (!file.exists(leaderboard_path)) stop("Leaderboard not found: ", leaderboard_path)
+  if (!dir.exists(docs_dir)) dir.create(docs_dir, recursive = TRUE)
+
+  df <- utils::read.csv(leaderboard_path, stringsAsFactors = FALSE)
+
+  # ---- dataset meta (short, Indonesian) ----
+  meta <- list(
+    ds01_continuous_linear = list(code = "ds01", short = "Linear Dasar",
+      desc = "Log pengeluaran per kapita, 3 kovariat linear. Uji baseline EBLUP vs Direct."),
+    ds02_bounded_rate = list(code = "ds02", short = "Proporsi (0,1)",
+      desc = "Kemiskinan rate (0,1). Estimasi wajib dalam [0,1]."),
+    ds03_highdim_sparse = list(code = "ds03", short = "High-Dim Sparse",
+      desc = "25 kovariat (3 sinyal + 22 noise). Uji regularisasi vs overfitting."),
+    ds04_nonlinear_interaction = list(code = "ds04", short = "Nonlinear",
+      desc = "Sin + kuadratik + interaksi. Wilayah MERF / tree-based."),
+    ds05_spatial_correlated = list(code = "ds05", short = "Spasial SAR",
+      desc = "Random effect SAR rho=0.65. Uji spatial borrowing (SEBLUP/INLA-Besag)."),
+    ds06_spatiotemporal_panel = list(code = "ds06", short = "Panel ST",
+      desc = "Panel D=50 x T=5, AR(1) phi=0.7. Uji Rao-Yu / panel SAE."),
+    ds07_extreme_outliers = list(code = "ds07", short = "Pencilan",
+      desc = "4 kabupaten shock +/-8 sigma. Uji robust (Huber / heavy-tail)."),
+    ds08_nested_subarea = list(code = "ds08", short = "Nested",
+      desc = "Hierarki provinsi > kabupaten. Uji two-fold subarea.")
+  )
+
+  keep_cols <- c("dataset_id", "dataset_name", "model", "N", "N_valid",
+                 "ARB_pct", "RRMSE_pct", "RMSE", "MAE", "Corr", "RelEff_pct",
+                 "Regular_RRMSE", "Outlier_RRMSE", "Boundary_Violations",
+                 "Peak_RAM_MB", "Runtime_sec")
+  keep_cols <- intersect(keep_cols, names(df))
+  rows <- df[, keep_cols, drop = FALSE]
+
+  updated <- format(Sys.time(), "%Y-%m-%d %H:%M UTC", tz = "UTC")
+
+  # ---- leaderboard.json ----
+  json_path <- file.path(docs_dir, "leaderboard.json")
+  payload <- list(updated = updated, datasets = meta, rows = rows)
+  json_str <- jsonlite::toJSON(payload, auto_unbox = TRUE, digits = 4, na = "null")
+  writeLines(json_str, json_path, useBytes = TRUE)
+
+  # ---- index.html (minimal shell) ----
+  html <- minimal_html_template()
+  html <- gsub("{{UPDATED}}", updated, html, fixed = TRUE)
+  html_path <- file.path(docs_dir, "index.html")
+  writeLines(html, html_path, useBytes = TRUE)
+
+  if (isTRUE(verbose)) {
+    cat(sprintf("Web updated:\n -> %s (%d rows)\n -> %s\n",
+                json_path, nrow(rows), html_path))
+  }
+  invisible(list(json = json_path, html = html_path, n = nrow(rows)))
+}
+
+minimal_html_template <- function() {
+'<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
@@ -51,7 +124,7 @@ footer{margin-top:18px;font-size:12px;color:var(--mut);text-align:center}
     <div>
       <h1>SAE Benchmark Lab</h1>
       <p class="sub">Tolok ukur model Small Area Estimation vs <i>ground truth</i> populasi (BPS two-stage). Pilih dataset untuk melihat peringkat model.</p>
-      <p class="sub mono" id="updated">Terakhir diperbarui: 2026-10-07 10:06 UTC</p>
+      <p class="sub mono" id="updated">Terakhir diperbarui: {{UPDATED}}</p>
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn" id="themeBtn" title="Gelap / Terang">&#127769; Tema</button>
@@ -147,4 +220,5 @@ function drawCharts(rows){
 </script>
 </body>
 </html>
-
+'
+}

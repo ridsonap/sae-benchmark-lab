@@ -1,13 +1,21 @@
 #' Custom Model Adapter Template for SAE Benchmark Lab
 #'
-#' Use this template to benchmark your own custom SAE model (e.g. your own Stan/INLA/EBLUP/ML script).
-#' Simply implement the function below so that it takes `(ds, formula_str)` and returns a numeric vector
-#' of area predictions matching `nrow(ds)`.
+#' Cara baru (disarankan, 3 baris):
+#'   source("R/metrics.R"); source("R/datasets.R")
+#'   source("R/benchmark.R"); source("R/web.R")
+#'   benchmark_sae(my_custom_sae_model, "MyModel (pkg, v1)", dataset_ids = NULL)
+#'
+#' Hasil otomatis masuk results/master_leaderboard.csv + docs/leaderboard.json
+#' dan tampil di docs/index.html per dataset.
+#'
+#' Syarat fungsi: terima `(ds, formula_str)` dan kembalikan vektor numerik
+#' prediksi area sepanjang `nrow(ds)`.
 #'
 #' @example
 #' source("models/custom_model_template.R")
-#' source("engine/benchmark_runner.R")
-#' run_benchmark_suite(models = list("MyCustomModel" = my_custom_sae_model))
+#' source("R/metrics.R"); source("R/datasets.R")
+#' source("R/benchmark.R"); source("R/web.R")
+#' benchmark_sae(my_custom_sae_model, "MyCustomModel (custom, v1)")
 
 my_custom_sae_model <- function(ds, formula_str, ...) {
   # 1. ds contains:

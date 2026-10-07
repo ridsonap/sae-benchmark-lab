@@ -8,6 +8,11 @@ A private, standardized testbed for evaluating and benchmarking **Small Area Est
 
 ```
 sae-benchmark-lab/
+├── R/                            # 📦 saebenchmark package (sumber utama)
+│   ├── metrics.R                 # calculate_sae_metrics()
+│   ├── datasets.R                # list_datasets(), default_formula()
+│   ├── benchmark.R               # benchmark_sae(), read_leaderboard()
+│   └── web.R                     # update_web()
 ├── datasets/                     # Standardized benchmark datasets (.rds & .csv)
 │   ├── datasets_manifest.csv     # Metadata catalog of all 8 datasets
 │   ├── ds01_continuous_linear.*  # Baseline Fay-Herriot (log expenditure)
@@ -22,13 +27,17 @@ sae-benchmark-lab/
 ├── generator/
 │   ├── bps_sampling_engine.R     # BPS two-stage PPS + systematic sampling engine
 │   └── make_all_datasets.R       # Battery dataset generator script
-├── engine/
+├── engine/                       # Legacy runners (tetap jalan, dibungkus R/ bila perlu)
 │   ├── metrics.R                 # SAE evaluation metrics (ARB, RRMSE, RelEff, etc.)
 │   └── benchmark_runner.R        # Automated model runner & plot generator
 ├── results/
-│   ├── master_leaderboard.csv    # Benchmark leaderboard table
+│   ├── master_leaderboard.csv    # Benchmark leaderboard table (sumber web)
 │   └── plots/                    # Automated comparative visualization plots
-└── run_test.R                    # Plug-and-play runner script
+├── docs/
+│   ├── index.html                # Web minimalis (fetch leaderboard.json)
+│   └── leaderboard.json          # Data leaderboard per dataset (auto-update)
+├── benchmark_my_model.R          # Contoh 3-baris benchmark model sendiri
+└── run_test.R                    # Plug-and-play runner script (legacy battery)
 ```
 
 ---
@@ -72,7 +81,36 @@ Every dataset contains the **exact finite population Ground Truth (`y_true`)** c
 
 ## 🚀 How to Test Any Model (Plug-and-Play)
 
-### 1. Run Built-In Benchmark Battery from Terminal
+### A. Cara baru (disarankan): 1 fungsi `benchmark_sae()`
+
+Hasil otomatis masuk ke `results/master_leaderboard.csv` + web `docs/` per dataset.
+
+```bash
+Rscript benchmark_my_model.R
+```
+
+```r
+source("R/metrics.R"); source("R/datasets.R")
+source("R/benchmark.R"); source("R/web.R")
+
+# 1. Fungsi model: terima (ds, formula_str), kembalikan vektor numerik nrow(ds)
+my_model <- function(ds, formula_str) {
+  fit <- lm(as.formula(formula_str), data = ds)
+  as.numeric(predict(fit, newdata = ds))
+}
+
+# 2. Benchmark + masuk leaderboard + refresh web
+benchmark_sae(my_model, "mymodel (lm, v1)", dataset_ids = NULL)  # NULL = semua 8 dataset
+# benchmark_sae(my_model, "mymodel (lm, v1)", dataset_ids = "ds01")  # 1 dataset saja
+
+# 3. Lihat web minimalis
+# Buka docs/index.html di browser, atau serve: python3 -m http.server --directory docs 8000
+```
+
+Fungsi bantu: `list_datasets()`, `default_formula("ds01_continuous_linear")`,
+`read_leaderboard()`, `update_web()` (regenerasi `docs/leaderboard.json` + `index.html`).
+
+### B. Cara lama: full battery via `run_test.R`
 
 ```bash
 # Run all 8 datasets across standard models (Direct, fastsaegpu HB, MERF, fastsae EBLUP, INLA)
